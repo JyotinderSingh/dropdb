@@ -153,11 +153,8 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	return block, nil
 }
 
-// length returns the number of blocks in the specified file.
+// length returns the number of blocks in the specified file. This method is not thread-safe.
 func (m *Manager) length(filename string) (int, error) {
-	m.mu.Lock()
-	defer m.mu.Unlock()
-
 	f, err := m.getFile(filename)
 	if err != nil {
 		return 0, fmt.Errorf("cannot access %s: %v", filename, err)
