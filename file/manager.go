@@ -78,10 +78,10 @@ func (m *Manager) Read(block *BlockId, page *Page) error {
 	buf := page.Contents()
 	n, err := io.ReadFull(f, buf)
 	if err != nil {
+		if n != len(buf) {
+			return fmt.Errorf("short read: expected %d bytes, got %d", len(buf), n)
+		}
 		return fmt.Errorf("cannot read data: %v", err)
-	}
-	if n != len(buf) {
-		return fmt.Errorf("short read: expected %d bytes, got %d", len(buf), n)
 	}
 
 	m.blocksRead++
@@ -125,12 +125,12 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	newBlockNumber, err := m.length(filename)
+	newBlockNumber, err := m.UnsafeLength(filename)
 	if err != nil {
 		return BlockId{}, fmt.Errorf("cannot get length of %s: %v", filename, err)
 	}
 
-	block := BlockId{filename: filename, blockNumber: newBlockNumber}
+	block := BlockId{File: filename, BlockNumber: newBlockNumber}
 
 	f, err := m.getFile(filename)
 	if err != nil {
@@ -161,8 +161,8 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	return block, nil
 }
 
-// length returns the number of blocks in the specified file. This method is not thread-safe.
-func (m *Manager) length(filename string) (int, error) {
+// UnsafeLength returns the number of blocks in the specified file. This method is not thread-safe.
+func (m *Manager) UnsafeLength(filename string) (int, error) {
 	f, err := m.getFile(filename)
 	if err != nil {
 		return 0, fmt.Errorf("cannot access %s: %v", filename, err)

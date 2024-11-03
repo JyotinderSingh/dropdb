@@ -1,4 +1,4 @@
-module dropdb
+module github.com/JyotinderSingh/dropdb
 
 go 1.23.2
 

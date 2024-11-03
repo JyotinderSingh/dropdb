@@ -3,25 +3,25 @@ package file
 import "fmt"
 
 type BlockId struct {
-	filename    string
-	blockNumber int
+	File        string
+	BlockNumber int
 }
 
 func NewBlockId(filename string, blockNumber int) *BlockId {
 	return &BlockId{
-		filename:    filename,
-		blockNumber: blockNumber,
+		File:        filename,
+		BlockNumber: blockNumber,
 	}
 }
 
 func (b *BlockId) Filename() string {
-	return b.filename
+	return b.File
 }
 
 func (b *BlockId) Number() int {
-	return b.blockNumber
+	return b.BlockNumber
 }
 
 func (b *BlockId) String() string {
-	return fmt.Sprintf("[file %s, block %d]", b.filename, b.blockNumber)
+	return fmt.Sprintf("[file %s, block %d]", b.File, b.BlockNumber)
 }
