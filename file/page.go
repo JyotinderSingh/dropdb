@@ -3,6 +3,7 @@ package file
 import (
 	"encoding/binary"
 	"errors"
+	"time"
 	"unicode/utf8"
 )
 
@@ -64,6 +65,41 @@ func (p *Page) SetString(offset int, s string) error {
 	}
 	p.SetBytes(offset, []byte(s))
 	return nil
+}
+
+// GetShort retrieves a 16-bit integer from the buffer at the specified offset.
+func (p *Page) GetShort(offset int) int16 {
+	return int16(binary.BigEndian.Uint16(p.buffer[offset:]))
+}
+
+// SetShort writes a 16-bit integer to the buffer at the specified offset.
+func (p *Page) SetShort(offset int, n int16) {
+	binary.BigEndian.PutUint16(p.buffer[offset:], uint16(n))
+}
+
+// GetBool retrieves a boolean from the buffer at the specified offset.
+func (p *Page) GetBool(offset int) bool {
+	return p.buffer[offset] != 0
+}
+
+// SetBool writes a boolean to the buffer at the specified offset.
+func (p *Page) SetBool(offset int, b bool) {
+	if b {
+		p.buffer[offset] = 1
+	} else {
+		p.buffer[offset] = 0
+	}
+}
+
+// GetDate retrieves a date (stored as a Unix timestamp) from the buffer at the specified offset.
+func (p *Page) GetDate(offset int) time.Time {
+	unixTimestamp := int64(binary.BigEndian.Uint64(p.buffer[offset:]))
+	return time.Unix(unixTimestamp, 0)
+}
+
+// SetDate writes a date (as a Unix timestamp) to the buffer at the specified offset.
+func (p *Page) SetDate(offset int, date time.Time) {
+	binary.BigEndian.PutUint64(p.buffer[offset:], uint64(date.Unix()))
 }
 
 // MaxLength calculates the maximum number of bytes required to store a string of a given length.
