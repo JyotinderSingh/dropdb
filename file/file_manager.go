@@ -10,11 +10,13 @@ import (
 
 // Manager is the File Manager used by the database.
 type Manager struct {
-	dbDirectory string
-	blockSize   int
-	isNew       bool
-	mu          sync.Mutex
-	openFiles   map[string]*os.File
+	dbDirectory   string
+	blockSize     int
+	isNew         bool
+	mu            sync.Mutex
+	openFiles     map[string]*os.File
+	blocksRead    int
+	blocksWritten int
 }
 
 // NewManager instantiates a new File Manager. Creates a new database directory if one doesn't already exist.
@@ -49,10 +51,12 @@ func NewManager(dbDirectory string, blockSize int) (*Manager, error) {
 	}
 
 	return &Manager{
-		dbDirectory: dbDirectory,
-		blockSize:   blockSize,
-		isNew:       isNew,
-		openFiles:   make(map[string]*os.File),
+		dbDirectory:   dbDirectory,
+		blockSize:     blockSize,
+		isNew:         isNew,
+		openFiles:     make(map[string]*os.File),
+		blocksRead:    0,
+		blocksWritten: 0,
 	}, nil
 }
 
@@ -80,6 +84,7 @@ func (m *Manager) Read(block *BlockId, page *Page) error {
 		return fmt.Errorf("short read: expected %d bytes, got %d", len(buf), n)
 	}
 
+	m.blocksRead++
 	return nil
 }
 
@@ -111,6 +116,7 @@ func (m *Manager) Write(block *BlockId, page *Page) error {
 		return fmt.Errorf("cannot flush file %s to disk: %v", block.Filename(), err)
 	}
 
+	m.blocksWritten++
 	return nil
 }
 
@@ -149,6 +155,8 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	if err := f.Sync(); err != nil {
 		return BlockId{}, fmt.Errorf("cannot sync file %s: %v", filename, err)
 	}
+
+	m.blocksWritten++
 
 	return block, nil
 }
@@ -193,4 +201,18 @@ func (m *Manager) getFile(filename string) (*os.File, error) {
 
 	m.openFiles[filename] = f
 	return f, nil
+}
+
+// GetBlocksRead returns the total number of blocks read.
+func (m *Manager) GetBlocksRead() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.blocksRead
+}
+
+// GetBlocksWritten returns the total number of blocks written.
+func (m *Manager) GetBlocksWritten() int {
+	m.mu.Lock()
+	defer m.mu.Unlock()
+	return m.blocksWritten
 }
