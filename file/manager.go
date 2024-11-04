@@ -1,6 +1,7 @@
 package file
 
 import (
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -77,15 +78,31 @@ func (m *Manager) Read(block *BlockId, page *Page) error {
 
 	buf := page.Contents()
 	n, err := io.ReadFull(f, buf)
-	if err != nil {
-		if n != len(buf) {
-			return fmt.Errorf("short read: expected %d bytes, got %d", len(buf), n)
+
+	// Handle successful read
+	if err == nil && n == len(buf) {
+		m.blocksRead++
+		return nil
+	}
+
+	// Handle EOF case
+	if errors.Is(err, io.EOF) {
+		// File was empty.
+		if n == 0 {
+			m.blocksRead++
+			return nil
 		}
+		// File wasn't empty, but encountered unexpected EOF.
+		return fmt.Errorf("partial read at EOF: expected %d bytes, got %d", len(buf), n)
+	}
+
+	// Handle other errors
+	if err != nil {
 		return fmt.Errorf("cannot read data: %v", err)
 	}
 
-	m.blocksRead++
-	return nil
+	// Handle short read (should be unreachable with io.ReadFull)
+	return fmt.Errorf("short read: expected %d bytes, got %d", len(buf), n)
 }
 
 func (m *Manager) Write(block *BlockId, page *Page) error {
@@ -125,7 +142,7 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
-	newBlockNumber, err := m.UnsafeLength(filename)
+	newBlockNumber, err := m.Length(filename)
 	if err != nil {
 		return BlockId{}, fmt.Errorf("cannot get length of %s: %v", filename, err)
 	}
@@ -161,8 +178,8 @@ func (m *Manager) Append(filename string) (BlockId, error) {
 	return block, nil
 }
 
-// UnsafeLength returns the number of blocks in the specified file. This method is not thread-safe.
-func (m *Manager) UnsafeLength(filename string) (int, error) {
+// Length returns the number of blocks in the specified file. This method is not thread-safe.
+func (m *Manager) Length(filename string) (int, error) {
 	f, err := m.getFile(filename)
 	if err != nil {
 		return 0, fmt.Errorf("cannot access %s: %v", filename, err)

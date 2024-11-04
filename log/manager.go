@@ -11,8 +11,8 @@ type Manager struct {
 	logFile      string
 	logPage      *file.Page
 	currentBlock *file.BlockId
-	latestLSN    int
-	lastSavedLSN int
+	latestLSN    int64
+	lastSavedLSN int64
 	mu           sync.Mutex
 }
 
@@ -23,7 +23,7 @@ func NewManager(fileManager *file.Manager, logFile string) (*Manager, error) {
 	logPage := file.NewPage(fileManager.BlockSize())
 	// Get the number of blocks in the log file. No need to take a lock here since this file is only accessed by the log
 	// manager (and there is only one instance of the log manager).
-	logSize, err := fileManager.UnsafeLength(logFile)
+	logSize, err := fileManager.Length(logFile)
 	if err != nil {
 		return nil, fmt.Errorf("failed to get log file length: %v", err)
 	}
@@ -52,19 +52,19 @@ func NewManager(fileManager *file.Manager, logFile string) (*Manager, error) {
 	}, nil
 }
 
-func (m *Manager) Flush(lsn int) error {
+func (m *Manager) Flush(lsn int64) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	if lsn >= m.lastSavedLSN {
-		return m.UnsafeFlush()
+		return m.flush()
 	}
 	return nil
 }
 
 // Iterator returns an iterator over the log records.
 func (m *Manager) Iterator() (*Iterator, error) {
-	if err := m.UnsafeFlush(); err != nil {
+	if err := m.flush(); err != nil {
 		return nil, fmt.Errorf("failed to flush log: %v", err)
 	}
 	return NewIterator(m.fileManager, m.currentBlock)
@@ -77,9 +77,10 @@ func (m *Manager) Iterator() (*Iterator, error) {
 // The beginning of the buffer contains the location of the last-written record (the "boundary").
 // Storing the records backwards makes it easy to read them in reverse order.
 // Returns the LSN of the final value.
-//                                 * boundary
+//   - boundary
+//
 // [<boundary (int)>............[][recordN (bytes)]...[record1 (bytes)]]
-func (m *Manager) Append(logRecord []byte) (int, error) {
+func (m *Manager) Append(logRecord []byte) (int64, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -92,7 +93,7 @@ func (m *Manager) Append(logRecord []byte) (int, error) {
 	if boundary-bytesNeeded < 4 { // The first 4 bits are for the boundary value.
 		// The page doesn't have enough space.
 		// Flush the page to disk.
-		if err := m.UnsafeFlush(); err != nil {
+		if err := m.flush(); err != nil {
 			return 0, fmt.Errorf("failed to flush log: %v", err)
 		}
 
@@ -136,8 +137,8 @@ func appendNewBlock(fileManager *file.Manager, logFile string, logPage *file.Pag
 	return &block, nil
 }
 
-// UnsafeFlush writes the buffer to the log file. This method is not thread-safe.
-func (m *Manager) UnsafeFlush() error {
+// flush writes the buffer to the log file. This method is not thread-safe.
+func (m *Manager) flush() error {
 	if err := m.fileManager.Write(m.currentBlock, m.logPage); err != nil {
 		return fmt.Errorf("failed to write log page: %v", err)
 	}

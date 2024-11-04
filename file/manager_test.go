@@ -114,7 +114,7 @@ func TestFileManager(t *testing.T) {
 		}
 
 		// Check file length
-		length, err := mgr.UnsafeLength(filename)
+		length, err := mgr.Length(filename)
 		assert.NoErrorf(err, "Failed to get file length: %v", err)
 
 		assert.Equalf(length, numBlocks, "Expected length %d, got %d", numBlocks, length)
