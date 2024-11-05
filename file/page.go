@@ -7,6 +7,10 @@ import (
 	"unicode/utf8"
 )
 
+// Page represents a page in the database file.
+// A page is a fixed-size block of data that is read from or written to disk as a unit.
+// The size of a page is determined by the file manager and is typically a multiple of the disk block size.
+// Pages are the unit of transfer between disk and main memory.
 type Page struct {
 	buffer []byte
 }

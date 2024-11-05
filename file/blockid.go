@@ -2,6 +2,7 @@ package file
 
 import "fmt"
 
+// BlockId identifies a disk block by its filename and block number.
 type BlockId struct {
 	File        string
 	BlockNumber int

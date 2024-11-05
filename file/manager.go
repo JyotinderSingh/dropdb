@@ -9,7 +9,8 @@ import (
 	"sync"
 )
 
-// Manager is the File Manager used by the database.
+// Manager is the File Manager used by the database. It provides methods to read, write, and append blocks to disk.
+// The Manager is thread-safe.
 type Manager struct {
 	dbDirectory   string
 	blockSize     int

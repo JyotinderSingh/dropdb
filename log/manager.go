@@ -6,6 +6,13 @@ import (
 	"sync"
 )
 
+// Manager manages the log file. It provides methods to append log records and to iterate over them.
+// The log file contains a series of log records, each of which is a sequence of bytes. The log records are written
+// backwards in the file.
+// The log file is processed in blocks, and the log records are written to the most recently allocated block.
+// When a block is full, a new block is allocated and used.
+// The log manager is responsible for managing the log records in the log file.
+// The log manager is thread-safe.
 type Manager struct {
 	fileManager  *file.Manager
 	logFile      string
@@ -77,8 +84,7 @@ func (m *Manager) Iterator() (*Iterator, error) {
 // The beginning of the buffer contains the location of the last-written record (the "boundary").
 // Storing the records backwards makes it easy to read them in reverse order.
 // Returns the LSN of the final value.
-//   - boundary
-//
+// ...............................*boundary
 // [<boundary (int)>............[][recordN (bytes)]...[record1 (bytes)]]
 func (m *Manager) Append(logRecord []byte) (int64, error) {
 	m.mu.Lock()
