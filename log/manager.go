@@ -77,8 +77,7 @@ func (m *Manager) Iterator() (*Iterator, error) {
 // The beginning of the buffer contains the location of the last-written record (the "boundary").
 // Storing the records backwards makes it easy to read them in reverse order.
 // Returns the LSN of the final value.
-//   - boundary
-//
+// ...............................*boundary
 // [<boundary (int)>............[][recordN (bytes)]...[record1 (bytes)]]
 func (m *Manager) Append(logRecord []byte) (int64, error) {
 	m.mu.Lock()
