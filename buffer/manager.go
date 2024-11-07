@@ -13,7 +13,9 @@ import (
 // maxWaitTime is the maximum time to wait for a buffer to become available.
 const maxWaitTime = 10 * time.Second
 
-// Manager manages the pinning and unpinning of buffers to blocks.
+// Manager manages the pinning and unpinning of buffers to blocks. It also handles the flushing of dirty buffers.
+// It maintains a pool of buffers and uses a replacement strategy to choose which buffer to replace when a new block
+// needs to be pinned.
 type Manager struct {
 	bufferPool   []*Buffer
 	numAvailable int
