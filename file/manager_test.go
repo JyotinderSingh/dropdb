@@ -40,12 +40,12 @@ func TestFileManager(t *testing.T) {
 		assert.NoErrorf(err, "Error while putting string into page: %v", err)
 
 		// Write the page to the block
-		err = mgr.Write(&block, page)
+		err = mgr.Write(block, page)
 		assert.NoErrorf(err, "Failed to write block: %v", err)
 
 		// Read the page back
 		readPage := NewPage(blockSize)
-		err = mgr.Read(&block, readPage)
+		err = mgr.Read(block, readPage)
 		assert.NoErrorf(err, "Failed to read block: %v", err)
 
 		// Verify the contents
@@ -62,7 +62,7 @@ func TestFileManager(t *testing.T) {
 
 		filename := "multiblock.db"
 		numBlocks := 5
-		blocks := make([]BlockId, numBlocks)
+		blocks := make([]*BlockId, numBlocks)
 
 		// Append multiple blocks
 		for i := 0; i < numBlocks; i++ {
@@ -81,14 +81,14 @@ func TestFileManager(t *testing.T) {
 			err = page.SetString(0, data)
 			assert.NoError(err)
 
-			err := mgr.Write(&block, page)
+			err := mgr.Write(block, page)
 			assert.NoErrorf(err, "Failed to write block %d: %v", i, err)
 		}
 
 		// Read and verify each block
 		for i, block := range blocks {
 			page := NewPage(blockSize)
-			err := mgr.Read(&block, page)
+			err := mgr.Read(block, page)
 			assert.NoErrorf(err, "Failed to read block %d: %v", i, err)
 
 			expectedData := fmt.Sprintf("Block %d data", i)
@@ -165,12 +165,12 @@ func TestFileManager(t *testing.T) {
 					assert.NoError(err)
 
 					// Write data
-					err := mgr.Write(&block, page)
+					err := mgr.Write(block, page)
 					assert.NoErrorf(err, "Goroutine %d write failed: %v", id, err)
 
 					// Read data back
 					readPage := NewPage(blockSize)
-					err = mgr.Read(&block, readPage)
+					err = mgr.Read(block, readPage)
 					assert.NoErrorf(err, "Goroutine %d read failed: %v", id, err)
 					readData, err := readPage.GetString(0)
 					assert.NoError(err)

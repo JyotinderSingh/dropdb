@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
+	"github.com/JyotinderSingh/dropdb/utils"
 )
 
 // Iterator provides the ability to move through the records of the log file in reverse order.
@@ -53,7 +54,7 @@ func (it *Iterator) Next() ([]byte, error) {
 	}
 
 	record := it.page.GetBytes(it.currentPosition)
-	it.currentPosition += 4 + len(record) // (size of record) + (length of record)
+	it.currentPosition += utils.IntSize + len(record) // (size of record) + (length of record)
 	return record, nil
 }
 
@@ -63,7 +64,7 @@ func (it *Iterator) moveToBlock(block *file.BlockId) error {
 		return fmt.Errorf("failed to read block: %v", err)
 	}
 
-	it.boundary = int(it.page.GetInt(0))
+	it.boundary = it.page.GetInt(0)
 	it.currentPosition = it.boundary
 	return nil
 }

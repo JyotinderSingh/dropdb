@@ -1,7 +1,9 @@
 package file
 
 import (
+	"github.com/JyotinderSingh/dropdb/utils"
 	"github.com/stretchr/testify/assert"
+	"math"
 	"testing"
 	"unicode/utf8"
 )
@@ -28,13 +30,13 @@ func TestPage(t *testing.T) {
 		page := NewPage(100)
 		testCases := []struct {
 			offset int
-			value  int32
+			value  int
 		}{
 			{0, 42},
 			{4, -123},
 			{8, 0},
-			{12, 2147483647},  // max int32
-			{16, -2147483648}, // min int32
+			{12, math.MaxInt},
+			{16, math.MinInt},
 		}
 
 		for _, tc := range testCases {
@@ -113,10 +115,10 @@ func TestPage(t *testing.T) {
 			strlen int
 			want   int
 		}{
-			{0, 4},                       // empty string
-			{1, 4 + utf8.UTFMax},         // single character
-			{10, 4 + 10*utf8.UTFMax},     // 10 characters
-			{1000, 4 + 1000*utf8.UTFMax}, // 1000 characters
+			{0, utils.IntSize},                       // empty string
+			{1, utils.IntSize + utf8.UTFMax},         // single character
+			{10, utils.IntSize + 10*utf8.UTFMax},     // 10 characters
+			{1000, utils.IntSize + 1000*utf8.UTFMax}, // 1000 characters
 		}
 
 		for _, tc := range testCases {
@@ -131,10 +133,10 @@ func TestPage(t *testing.T) {
 		page := NewPage(blockSize)
 
 		// Test writing at the end of buffer
-		lastValidOffset := blockSize - 4 // space for one int32
+		lastValidOffset := blockSize - 8 // space for one int64, this test assumes that it runs on a 64-bit machine.
 		page.SetInt(lastValidOffset, 42)
 		got := page.GetInt(lastValidOffset)
-		assert.Equal(int32(42), got, "Value at buffer boundary should match")
+		assert.Equal(42, got, "Value at buffer boundary should match")
 	})
 
 	t.Run("LargeData", func(t *testing.T) {

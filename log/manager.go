@@ -3,6 +3,7 @@ package log
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
+	"github.com/JyotinderSingh/dropdb/utils"
 	"sync"
 )
 
@@ -18,8 +19,8 @@ type Manager struct {
 	logFile      string
 	logPage      *file.Page
 	currentBlock *file.BlockId
-	latestLSN    int64
-	lastSavedLSN int64
+	latestLSN    int
+	lastSavedLSN int
 	mu           sync.Mutex
 }
 
@@ -59,7 +60,7 @@ func NewManager(fileManager *file.Manager, logFile string) (*Manager, error) {
 	}, nil
 }
 
-func (m *Manager) Flush(lsn int64) error {
+func (m *Manager) Flush(lsn int) error {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
@@ -86,17 +87,17 @@ func (m *Manager) Iterator() (*Iterator, error) {
 // Returns the LSN of the final value.
 // ...............................*boundary
 // [<boundary (int)>............[][recordN (bytes)]...[record1 (bytes)]]
-func (m *Manager) Append(logRecord []byte) (int64, error) {
+func (m *Manager) Append(logRecord []byte) (int, error) {
 	m.mu.Lock()
 	defer m.mu.Unlock()
 
 	// Get the current boundary.
-	boundary := int(m.logPage.GetInt(0))
+	boundary := m.logPage.GetInt(0)
 
 	recordSize := len(logRecord)
-	bytesNeeded := recordSize + 4 // 4 bytes for the integer storing the record size.
+	bytesNeeded := recordSize + utils.IntSize // (utils.IntSize) bytes for the integer storing the record size.
 
-	if boundary-bytesNeeded < 4 { // The first 4 bits are for the boundary value.
+	if boundary-bytesNeeded < utils.IntSize { // The first 4 bits are for the boundary value.
 		// The page doesn't have enough space.
 		// Flush the page to disk.
 		if err := m.flush(); err != nil {
@@ -111,7 +112,7 @@ func (m *Manager) Append(logRecord []byte) (int64, error) {
 		}
 
 		// Load the new boundary.
-		boundary = int(m.logPage.GetInt(0))
+		boundary = m.logPage.GetInt(0)
 	}
 
 	recordPosition := boundary - bytesNeeded
@@ -119,7 +120,7 @@ func (m *Manager) Append(logRecord []byte) (int64, error) {
 	// Write the record.
 	m.logPage.SetBytes(recordPosition, logRecord)
 	// Update the boundary.
-	m.logPage.SetInt(0, int32(recordPosition))
+	m.logPage.SetInt(0, recordPosition)
 
 	m.latestLSN++
 	return m.latestLSN, nil
@@ -136,11 +137,11 @@ func appendNewBlock(fileManager *file.Manager, logFile string, logPage *file.Pag
 	// Set the initial boundary for the page, every time we flush the page we reset its contents. This is done by
 	// resetting the boundary. The initial value for the boundary is the `blockSize`, which represents the last bit of
 	// the page (since the page is of size `blockSize`).
-	logPage.SetInt(0, int32(fileManager.BlockSize()))
-	if err := fileManager.Write(&block, logPage); err != nil {
+	logPage.SetInt(0, fileManager.BlockSize())
+	if err := fileManager.Write(block, logPage); err != nil {
 		return nil, fmt.Errorf("failed to write new block: %v", err)
 	}
-	return &block, nil
+	return block, nil
 }
 
 // flush writes the buffer to the log file. This method is not thread-safe.

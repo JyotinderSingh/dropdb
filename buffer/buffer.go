@@ -18,8 +18,8 @@ type Buffer struct {
 	contents    *file.Page
 	block       *file.BlockId
 	pins        int
-	txnNum      int64
-	lsn         int64
+	txnNum      int
+	lsn         int
 }
 
 func NewBuffer(fileManager *file.Manager, logManager *log.Manager) *Buffer {
@@ -43,7 +43,7 @@ func (b *Buffer) Block() *file.BlockId {
 	return b.block
 }
 
-func (b *Buffer) SetModified(txnNum, lsn int64) {
+func (b *Buffer) SetModified(txnNum, lsn int) {
 	b.txnNum = txnNum
 
 	// If LSN is smaller than 0, it indicates that a log record was not generated for this update.
@@ -57,7 +57,7 @@ func (b *Buffer) isPinned() bool {
 	return b.pins > 0
 }
 
-func (b *Buffer) modifyingTxn() int64 {
+func (b *Buffer) modifyingTxn() int {
 	return b.txnNum
 }
 
@@ -75,7 +75,8 @@ func (b *Buffer) assignToBlock(block *file.BlockId) error {
 	return nil
 }
 
-// flush writes the buffer to its disk block if it is dirty.
+// flush writes the buffer to its disk block if it is dirty. The method first writes the log record to the log file,
+// and then writes the contents of the buffer to disk.
 func (b *Buffer) flush() error {
 	if b.txnNum >= 0 {
 		if err := b.logManager.Flush(b.lsn); err != nil {

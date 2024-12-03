@@ -3,6 +3,8 @@ package file
 import (
 	"encoding/binary"
 	"errors"
+	"github.com/JyotinderSingh/dropdb/utils"
+	"runtime"
 	"time"
 	"unicode/utf8"
 )
@@ -25,21 +27,39 @@ func NewPageFromBytes(bytes []byte) *Page {
 	return &Page{buffer: bytes}
 }
 
-// GetInt retrieves a 32-bit integer from the buffer at the specified offset.
-func (p *Page) GetInt(offset int) int32 {
-	return int32(binary.BigEndian.Uint32(p.buffer[offset:]))
+// GetInt retrieves an integer from the buffer at the specified offset.
+func (p *Page) GetInt(offset int) int {
+	if runtime.GOARCH == "386" || runtime.GOARCH == "arm" {
+		return int(binary.BigEndian.Uint32(p.buffer[offset:]))
+	}
+	// arm64 (M1/M2 Macs) and amd64 use 64-bit
+	return int(binary.BigEndian.Uint64(p.buffer[offset:]))
 }
 
-// SetInt writes a 32-bit integer to the buffer at the specified offset.
-func (p *Page) SetInt(offset int, n int32) {
-	binary.BigEndian.PutUint32(p.buffer[offset:], uint32(n))
+// SetInt writes an integer to the buffer at the specified offset.
+func (p *Page) SetInt(offset int, n int) {
+	if runtime.GOARCH == "386" || runtime.GOARCH == "arm" {
+		binary.BigEndian.PutUint32(p.buffer[offset:], uint32(n))
+	} else {
+		binary.BigEndian.PutUint64(p.buffer[offset:], uint64(n))
+	}
+}
+
+// GetLong retrieves a 64-bit integer from the buffer at the specified offset.
+func (p *Page) GetLong(offset int) int64 {
+	return int64(binary.BigEndian.Uint64(p.buffer[offset:]))
+}
+
+// SetLong writes a 64-bit integer to the buffer at the specified offset.
+func (p *Page) SetLong(offset int, n int64) {
+	binary.BigEndian.PutUint64(p.buffer[offset:], uint64(n))
 }
 
 // GetBytes retrieves a byte slice from the buffer starting at the specified offset.
 func (p *Page) GetBytes(offset int) []byte {
-	length := int(binary.BigEndian.Uint32(p.buffer[offset:]))
-	start := offset + 4
-	end := start + length
+	length := binary.BigEndian.Uint32(p.buffer[offset:])
+	start := offset + utils.IntSize
+	end := start + int(length)
 	b := make([]byte, length)
 	copy(b, p.buffer[start:end])
 	return b
@@ -49,7 +69,7 @@ func (p *Page) GetBytes(offset int) []byte {
 func (p *Page) SetBytes(offset int, b []byte) {
 	length := len(b)
 	binary.BigEndian.PutUint32(p.buffer[offset:], uint32(length))
-	start := offset + 4
+	start := offset + utils.IntSize
 	copy(p.buffer[start:], b)
 }
 
@@ -109,8 +129,8 @@ func (p *Page) SetDate(offset int, date time.Time) {
 // MaxLength calculates the maximum number of bytes required to store a string of a given length.
 func MaxLength(strlen int) int {
 	// Golang uses UTF-8 encoding
-	// Add 4 bytes for the length prefix.
-	return 4 + strlen*utf8.UTFMax
+	// Add utils.IntSize bytes for the length prefix.
+	return utils.IntSize + strlen*utf8.UTFMax
 }
 
 // Contents returns the byte buffer maintained by the Page.
