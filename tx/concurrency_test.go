@@ -1,6 +1,7 @@
 package tx
 
 import (
+	"os"
 	"strings"
 	"sync"
 	"testing"
@@ -18,13 +19,16 @@ func TestConcurrency(t *testing.T) {
 	// Initialize the database system
 	fm, err := file.NewManager("concurrencytest", 400)
 	assert.NoError(t, err, "Error initializing file manager")
+	// delete concurrency test directory and all its contents after the test
+	defer func() {
+		err := os.RemoveAll("concurrencytest")
+		if err != nil {
+			return
+		}
+	}()
 
 	lm, _ := log.NewManager(fm, "logfile")
 	bm := buffer.NewManager(fm, lm, 8) // 8 buffers
-
-	// Initialize blocks to ensure "testfile" has blocks 0, 1, and 2
-	err = initializeBlocks(fm, lm, bm)
-	assert.NoError(t, err, "Error initializing blocks")
 
 	var wg sync.WaitGroup
 	wg.Add(3) // 3 transactions
@@ -56,32 +60,6 @@ func TestConcurrency(t *testing.T) {
 	for err := range errCh {
 		assert.NoError(t, err)
 	}
-}
-
-// initializeBlocks ensures that "testfile" has at least 3 blocks (0, 1, 2)
-func initializeBlocks(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) error {
-	txInit := NewTransaction(fm, lm, bm)
-	defer func() {
-		err := txInit.Commit()
-		if err != nil {
-			// Since we're in a helper function, we print the error
-			// The main test function will handle any errors returned
-			println("Error committing initialization transaction:", err.Error())
-		}
-	}()
-
-	size, err := txInit.Size("testfile")
-	if err != nil {
-		return err
-	}
-	for i := size; i <= 2; i++ {
-		_, err := txInit.Append("testfile")
-		if err != nil {
-			return err
-		}
-		// Optionally, initialize block contents here
-	}
-	return nil
 }
 
 // transactionA corresponds to Transaction A in the original Java code
