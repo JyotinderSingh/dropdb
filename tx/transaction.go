@@ -38,12 +38,12 @@ type Transaction struct {
 // This method depends on the file, log, and buffer managers which it receives from the instantiating class.
 // These objects are usually created during system initialization. Thus, this constructor cannot be called until either
 // the DropDB#Init or DropDB#InitFileLogAndBufferManager methods are called.
-func NewTransaction(fileManager *file.Manager, logManager *log.Manager, bufferManager *buffer.Manager) *Transaction {
+func NewTransaction(fileManager *file.Manager, logManager *log.Manager, bufferManager *buffer.Manager, lockTable *concurrency.LockTable) *Transaction {
 	tx := &Transaction{
 		fileManager:        fileManager,
 		bufferManager:      bufferManager,
 		txNum:              nextTxNumber(),
-		concurrencyManager: concurrency.NewManager(),
+		concurrencyManager: concurrency.NewManager(lockTable),
 		myBuffers:          NewBufferList(bufferManager),
 	}
 	tx.recoverManager = NewRecoveryManager(tx, tx.txNum, logManager, bufferManager)

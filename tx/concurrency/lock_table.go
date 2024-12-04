@@ -6,9 +6,10 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"sync"
+	"time"
 )
 
-const maxWaitTime = 10000 // 10 seconds
+const maxWaitTime = 10 * time.Second
 
 // LockTable provides methods to lock and Unlock blocks.
 // If a transaction requests a lock that causes a conflict with an existing lock,

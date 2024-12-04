@@ -1,6 +1,8 @@
 package concurrency
 
-import "github.com/JyotinderSingh/dropdb/file"
+import (
+	"github.com/JyotinderSingh/dropdb/file"
+)
 
 type Manager struct {
 	lockTable *LockTable // pointer to the global lock table.
@@ -8,8 +10,8 @@ type Manager struct {
 }
 
 // NewManager creates a new Manager.
-func NewManager() *Manager {
-	return &Manager{lockTable: NewLockTable(), locks: make(map[file.BlockId]string)}
+func NewManager(lockTable *LockTable) *Manager {
+	return &Manager{lockTable: lockTable, locks: make(map[file.BlockId]string)}
 }
 
 // SLock obtains a shared lock on the block, if necessary.
