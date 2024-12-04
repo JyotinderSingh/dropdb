@@ -7,11 +7,25 @@ import (
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
 	"math"
+	"sync"
 )
 
+const EndOfFile = -1
+
+var (
+	nextTxNum   = 0
+	nextTxNumMu sync.Mutex
+)
+
+// nextTxNumber increments and returns the next transaction number.
+func nextTxNumber() int {
+	nextTxNumMu.Lock()
+	defer nextTxNumMu.Unlock()
+	nextTxNum++
+	return nextTxNum
+}
+
 type Transaction struct {
-	nextTxNum          int
-	endOfFile          int
 	recoverManager     *RecoveryManager
 	concurrencyManager *concurrency.Manager
 	bufferManager      *buffer.Manager
@@ -28,11 +42,10 @@ func NewTransaction(fileManager *file.Manager, logManager *log.Manager, bufferMa
 	tx := &Transaction{
 		fileManager:        fileManager,
 		bufferManager:      bufferManager,
-		txNum:              0,
+		txNum:              nextTxNumber(),
 		concurrencyManager: concurrency.NewManager(),
 		myBuffers:          NewBufferList(bufferManager),
 	}
-	tx.txNum = tx.nextTxNumber()
 	tx.recoverManager = NewRecoveryManager(tx, tx.txNum, logManager, bufferManager)
 	return tx
 }
@@ -185,7 +198,7 @@ func (tx *Transaction) SetString(block *file.BlockId, offset int, val string, lo
 // This is necessary to prevent another transaction from adding a block to the file
 // while this transaction is counting the blocks and causing phantom reads.
 func (tx *Transaction) Size(filename string) (int, error) {
-	dummyBlock := file.NewBlockId(filename, tx.endOfFile)
+	dummyBlock := file.NewBlockId(filename, EndOfFile)
 	if err := tx.concurrencyManager.SLock(dummyBlock); err != nil {
 		return -1, err
 	}
@@ -197,7 +210,7 @@ func (tx *Transaction) Size(filename string) (int, error) {
 // This is necessary to prevent another transaction from reading the size of the file while this append is in progress.
 // This helps prevent phantom reads.
 func (tx *Transaction) Append(filename string) (*file.BlockId, error) {
-	dummyBlock := file.NewBlockId(filename, tx.endOfFile)
+	dummyBlock := file.NewBlockId(filename, EndOfFile)
 	if err := tx.concurrencyManager.XLock(dummyBlock); err != nil {
 		return nil, err
 	}
@@ -214,8 +227,7 @@ func (tx *Transaction) AvailableBuffers() int {
 	return tx.bufferManager.Available()
 }
 
-// nextTxNumber increments the transaction number and returns the new value.
-func (tx *Transaction) nextTxNumber() int {
-	tx.nextTxNum++
-	return tx.nextTxNum
+// TxNum returns the transaction number.
+func (tx *Transaction) TxNum() int {
+	return tx.txNum
 }

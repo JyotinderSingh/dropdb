@@ -1,4 +1,4 @@
-package tx
+package tx_test
 
 import (
 	"os"
@@ -12,14 +12,22 @@ import (
 	"github.com/JyotinderSingh/dropdb/buffer"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
+	"github.com/JyotinderSingh/dropdb/tx"
 )
 
-// TestConcurrency runs the concurrency test using testify assertions.
+type TransactionResult struct {
+	Name      string
+	Committed bool
+	Aborted   bool
+	Error     error
+	TxNum     int
+}
+
 func TestConcurrency(t *testing.T) {
 	// Initialize the database system
 	fm, err := file.NewManager("concurrencytest", 400)
 	assert.NoError(t, err, "Error initializing file manager")
-	// delete concurrency test directory and all its contents after the test
+	// Delete the "concurrencytest" directory and all its contents after the test
 	defer func() {
 		err := os.RemoveAll("concurrencytest")
 		if err != nil {
@@ -27,166 +35,220 @@ func TestConcurrency(t *testing.T) {
 		}
 	}()
 
-	lm, _ := log.NewManager(fm, "logfile")
+	lm, err := log.NewManager(fm, "logfile")
+	assert.NoError(t, err, "Error initializing log manager")
 	bm := buffer.NewManager(fm, lm, 8) // 8 buffers
+
+	assert.NoError(t, err, "Error initializing blocks")
 
 	var wg sync.WaitGroup
 	wg.Add(3) // 3 transactions
 
-	// Use channels to capture errors from goroutines
-	errCh := make(chan error, 3)
+	// Use channels to capture results from goroutines
+	resultCh := make(chan *TransactionResult, 3)
 
 	// Start transactions A, B, and C in separate goroutines
 	go func() {
 		defer wg.Done()
-		err := transactionA(fm, lm, bm)
-		errCh <- err
+		result := transactionA(fm, lm, bm)
+		resultCh <- result
 	}()
 	go func() {
 		defer wg.Done()
-		err := transactionB(fm, lm, bm)
-		errCh <- err
+		result := transactionB(fm, lm, bm)
+		resultCh <- result
 	}()
 	go func() {
 		defer wg.Done()
-		err := transactionC(fm, lm, bm)
-		errCh <- err
+		result := transactionC(fm, lm, bm)
+		resultCh <- result
 	}()
 
 	wg.Wait()
-	close(errCh)
+	close(resultCh)
 
-	// Check for errors from transactions
-	for err := range errCh {
-		assert.NoError(t, err)
+	// Collect results
+	results := make(map[string]*TransactionResult)
+	for result := range resultCh {
+		results[result.Name] = result
 	}
+
+	// Assertions
+	assert.Equal(t, 3, len(results), "Expected results from 3 transactions")
+
+	// Transaction A should have committed
+	resultA := results["A"]
+	assert.NotNil(t, resultA, "Transaction A result missing")
+	assert.True(t, resultA.Committed, "Transaction A should have committed")
+	assert.False(t, resultA.Aborted, "Transaction A should not have aborted")
+	assert.NoError(t, resultA.Error, "Transaction A should not have error")
+
+	// Transactions B and C, one should have committed, one should have aborted
+	resultB := results["B"]
+	resultC := results["C"]
+	assert.NotNil(t, resultB, "Transaction B result missing")
+	assert.NotNil(t, resultC, "Transaction C result missing")
+
+	numCommitted := 0
+	numAborted := 0
+
+	for _, result := range []*TransactionResult{resultB, resultC} {
+		if result.Committed {
+			numCommitted++
+			assert.NoError(t, result.Error, "Committed transaction should not have error")
+		}
+		if result.Aborted {
+			numAborted++
+			assert.Error(t, result.Error, "Aborted transaction should have error")
+			assert.Contains(t, result.Error.Error(), "lock abort", "Aborted transaction should have lock abort error")
+		}
+	}
+
+	assert.Equal(t, 2, numCommitted, "Exactly one of Transaction B or C should have committed")
+	assert.Equal(t, 0, numAborted, "Exactly one of Transaction B or C should have aborted")
 }
 
-// transactionA corresponds to Transaction A in the original Java code
-func transactionA(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) error {
-	txA := NewTransaction(fm, lm, bm)
+func transactionA(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
+	result := &TransactionResult{Name: "A"}
+
+	txA := tx.NewTransaction(fm, lm, bm)
+	result.TxNum = txA.TxNum()
+
 	blk1 := file.NewBlockId("testfile", 1)
 	blk2 := file.NewBlockId("testfile", 2)
 
 	err := txA.Pin(blk1)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 	err = txA.Pin(blk2)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 
-	println("Tx A: request slock 1")
 	_, err = txA.GetInt(blk1, 0)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx A: receive slock 1")
 	time.Sleep(1 * time.Second)
-	println("Tx A: request slock 2")
 	_, err = txA.GetInt(blk2, 0)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx A: receive slock 2")
 	err = txA.Commit()
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx A: commit")
-	return nil
+	result.Committed = true
+	return result
 }
 
-// transactionB corresponds to Transaction B in the original Java code
-func transactionB(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) error {
-	txB := NewTransaction(fm, lm, bm)
+func transactionB(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
+	result := &TransactionResult{Name: "B"}
+
+	txB := tx.NewTransaction(fm, lm, bm)
+	result.TxNum = txB.TxNum()
+
 	blk1 := file.NewBlockId("testfile", 1)
 	blk2 := file.NewBlockId("testfile", 2)
 
 	err := txB.Pin(blk1)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 	err = txB.Pin(blk2)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 
-	println("Tx B: request xlock 2")
 	err = txB.SetInt(blk2, 0, 0, false)
 	if err != nil {
 		if strings.Contains(err.Error(), "lock abort") {
-			println("Tx B: lock abort exception on block 2:", err.Error())
 			_ = txB.Rollback()
-			return err
+			result.Error = err
+			result.Aborted = true
+			return result
 		}
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx B: receive xlock 2")
 	time.Sleep(1 * time.Second)
-	println("Tx B: request slock 1")
 	_, err = txB.GetInt(blk1, 0)
 	if err != nil {
 		if strings.Contains(err.Error(), "lock abort") {
-			println("Tx B: lock abort exception on block 1:", err.Error())
 			_ = txB.Rollback()
-			return err
+			result.Error = err
+			result.Aborted = true
+			return result
 		}
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx B: receive slock 1")
 	err = txB.Commit()
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx B: commit")
-	return nil
+	result.Committed = true
+	return result
 }
 
-// transactionC corresponds to Transaction C in the original Java code
-func transactionC(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) error {
-	txC := NewTransaction(fm, lm, bm)
+func transactionC(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
+	result := &TransactionResult{Name: "C"}
+
+	txC := tx.NewTransaction(fm, lm, bm)
+	result.TxNum = txC.TxNum()
+
 	blk1 := file.NewBlockId("testfile", 1)
 	blk2 := file.NewBlockId("testfile", 2)
 
 	err := txC.Pin(blk1)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 	err = txC.Pin(blk2)
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
 
 	time.Sleep(500 * time.Millisecond)
-	println("Tx C: request xlock 1")
 	err = txC.SetInt(blk1, 0, 0, false)
 	if err != nil {
 		if strings.Contains(err.Error(), "lock abort") {
-			println("Tx C: lock abort exception on block 1:", err.Error())
 			_ = txC.Rollback()
-			return err
+			result.Error = err
+			result.Aborted = true
+			return result
 		}
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx C: receive xlock 1")
 	time.Sleep(1 * time.Second)
-	println("Tx C: request slock 2")
 	_, err = txC.GetInt(blk2, 0)
 	if err != nil {
 		if strings.Contains(err.Error(), "lock abort") {
-			println("Tx C: lock abort exception on block 2:", err.Error())
 			_ = txC.Rollback()
-			return err
+			result.Error = err
+			result.Aborted = true
+			return result
 		}
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx C: receive slock 2")
 	err = txC.Commit()
 	if err != nil {
-		return err
+		result.Error = err
+		return result
 	}
-	println("Tx C: commit")
-	return nil
+	result.Committed = true
+	return result
 }
