@@ -1,6 +1,8 @@
 package tx_test
 
 import (
+	"fmt"
+	"math/rand/v2"
 	"os"
 	"strings"
 	"sync"
@@ -23,13 +25,14 @@ type TransactionResult struct {
 	TxNum     int
 }
 
-func TestConcurrency(t *testing.T) {
+func TestConcurrencySuccess(t *testing.T) {
+	dir := fmt.Sprintf("testdir_%d", rand.Int())
 	// Initialize the database system
-	fm, err := file.NewManager("concurrencytest", 400)
+	fm, err := file.NewManager(dir, 400)
 	assert.NoError(t, err, "Error initializing file manager")
-	// Delete the "concurrencytest" directory and all its contents after the test
+	// Delete the db directory and all its contents after the test
 	defer func() {
-		err := os.RemoveAll("concurrencytest")
+		err := os.RemoveAll(dir)
 		if err != nil {
 			return
 		}
@@ -76,38 +79,27 @@ func TestConcurrency(t *testing.T) {
 	// Assertions
 	assert.Equal(t, 3, len(results), "Expected results from 3 transactions")
 
-	// Transaction A should have committed
-	resultA := results["A"]
-	assert.NotNil(t, resultA, "Transaction A result missing")
-	assert.True(t, resultA.Committed, "Transaction A should have committed")
-	assert.False(t, resultA.Aborted, "Transaction A should not have aborted")
-	assert.NoError(t, resultA.Error, "Transaction A should not have error")
+	// All transactions should have committed successfully and have valid transaction numbers
+	usedTxNums := make(map[int]bool)
+	var lastTxNum int
+	for name, result := range results {
+		assert.NotNil(t, result, "Transaction %s result missing", name)
+		assert.True(t, result.Committed, "Transaction %s should have committed", name)
+		assert.False(t, result.Aborted, "Transaction %s should not have aborted", name)
+		assert.NoError(t, result.Error, "Transaction %s should not have error", name)
 
-	// Transactions B and C, one should have committed, one should have aborted
-	resultB := results["B"]
-	resultC := results["C"]
-	assert.NotNil(t, resultB, "Transaction B result missing")
-	assert.NotNil(t, resultC, "Transaction C result missing")
-
-	numCommitted := 0
-	numAborted := 0
-
-	for _, result := range []*TransactionResult{resultB, resultC} {
-		if result.Committed {
-			numCommitted++
-			assert.NoError(t, result.Error, "Committed transaction should not have error")
+		assert.True(t, result.TxNum >= 1 && result.TxNum <= 3, "Transaction %s number should be between 1 and 3, got %d", name, result.TxNum)
+		assert.False(t, usedTxNums[result.TxNum], "Transaction number %d was used more than once", result.TxNum)
+		if lastTxNum > 0 {
+			assert.NotEqual(t, lastTxNum, result.TxNum, "Transaction number %d was repeated", result.TxNum)
 		}
-		if result.Aborted {
-			numAborted++
-			assert.Error(t, result.Error, "Aborted transaction should have error")
-			assert.Contains(t, result.Error.Error(), "lock abort", "Aborted transaction should have lock abort error")
-		}
+		lastTxNum = result.TxNum
+		usedTxNums[result.TxNum] = true
 	}
-
-	assert.Equal(t, 2, numCommitted, "Exactly one of Transaction B or C should have committed")
-	assert.Equal(t, 0, numAborted, "Exactly one of Transaction B or C should have aborted")
+	assert.Equal(t, 3, len(usedTxNums), "Should have exactly 3 different transaction numbers")
 }
 
+// Transaction A reads blocks 1 and 2, then commits
 func transactionA(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
 	result := &TransactionResult{Name: "A"}
 
@@ -148,6 +140,7 @@ func transactionA(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *Transa
 	return result
 }
 
+// Transaction B reads block 1 and writes block 2, then commits
 func transactionB(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
 	result := &TransactionResult{Name: "B"}
 
@@ -200,6 +193,7 @@ func transactionB(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *Transa
 	return result
 }
 
+// Transaction C writes block 1 and reads block 2, then commits
 func transactionC(fm *file.Manager, lm *log.Manager, bm *buffer.Manager) *TransactionResult {
 	result := &TransactionResult{Name: "C"}
 
