@@ -15,6 +15,10 @@ const (
 	Rollback
 	SetInt
 	SetString
+	SetBool
+	SetLong
+	SetShort
+	SetDate
 )
 
 func (t LogRecordType) String() string {
@@ -31,6 +35,14 @@ func (t LogRecordType) String() string {
 		return "SetInt"
 	case SetString:
 		return "SetString"
+	case SetBool:
+		return "SetBool"
+	case SetLong:
+		return "SetLong"
+	case SetShort:
+		return "SetShort"
+	case SetDate:
+		return "SetDate"
 	default:
 		return "Unknown"
 	}
@@ -50,6 +62,14 @@ func FromCode(code int) (LogRecordType, error) {
 		return SetInt, nil
 	case 5:
 		return SetString, nil
+	case 6:
+		return SetBool, nil
+	case 7:
+		return SetLong, nil
+	case 8:
+		return SetShort, nil
+	case 9:
+		return SetDate, nil
 	default:
 		return -1, errors.New("unknown LogRecordType code")
 	}
@@ -67,6 +87,9 @@ type LogRecord interface {
 	// Undoes the operation encoded by this log record.
 	// The only log record types for which this method does anything interesting are SETINT and SETSTRING.
 	Undo(tx *Transaction) error
+
+	// String returns a string representation of the log record.
+	String() string
 }
 
 // CreateLogRecord interprets the bytes to create the appropriate log record. This method assumes that the first 4 bytes
@@ -92,6 +115,14 @@ func CreateLogRecord(bytes []byte) (LogRecord, error) {
 		return NewSetIntRecord(p)
 	case SetString:
 		return NewSetStringRecord(p)
+	case SetBool:
+		return NewSetBoolRecord(p)
+	case SetLong:
+		return NewSetLongRecord(p)
+	case SetShort:
+		return NewSetShortRecord(p)
+	case SetDate:
+		return NewSetDateRecord(p)
 	default:
 		return nil, errors.New("unexpected LogRecordType")
 	}

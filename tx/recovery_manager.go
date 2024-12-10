@@ -3,6 +3,7 @@ package tx
 import (
 	"github.com/JyotinderSingh/dropdb/buffer"
 	"github.com/JyotinderSingh/dropdb/log"
+	"time"
 )
 
 // RecoveryManager is responsible for recovering transactions from the log. It provides methods for committing,
@@ -89,6 +90,34 @@ func (rm *RecoveryManager) SetString(buffer *buffer.Buffer, offset int, newVal s
 	}
 	block := buffer.Block()
 	return WriteSetStringToLog(rm.logManager, rm.txNum, block, offset, oldVal)
+}
+
+// SetBool writes a SetBool record to the log and returns its lsn.
+func (rm *RecoveryManager) SetBool(buffer *buffer.Buffer, offset int, newVal bool) (int, error) {
+	oldVal := buffer.Contents().GetBool(offset)
+	block := buffer.Block()
+	return WriteSetBoolToLog(rm.logManager, rm.txNum, block, offset, oldVal)
+}
+
+// SetLong writes a SetLong record to the log and returns its lsn.
+func (rm *RecoveryManager) SetLong(buffer *buffer.Buffer, offset int, newVal int64) (int, error) {
+	oldVal := buffer.Contents().GetLong(offset)
+	block := buffer.Block()
+	return WriteSetLongToLog(rm.logManager, rm.txNum, block, offset, oldVal)
+}
+
+// SetShort writes a SetShort record to the log and returns its lsn.
+func (rm *RecoveryManager) SetShort(buffer *buffer.Buffer, offset int, newVal int16) (int, error) {
+	oldVal := buffer.Contents().GetShort(offset)
+	block := buffer.Block()
+	return WriteSetShortToLog(rm.logManager, rm.txNum, block, offset, oldVal)
+}
+
+// SetDate writes a SetDate record to the log and returns its lsn.
+func (rm *RecoveryManager) SetDate(buffer *buffer.Buffer, offset int, newVal time.Time) (int, error) {
+	oldVal := buffer.Contents().GetDate(offset)
+	block := buffer.Block()
+	return WriteSetDateToLog(rm.logManager, rm.txNum, block, offset, oldVal)
 }
 
 // doRollback rolls back the transaction,
