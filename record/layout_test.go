@@ -82,8 +82,7 @@ func TestNewLayout(t *testing.T) {
 			var lastOffset int
 			var fields []string
 			for _, field := range schema.Fields() {
-				offset, exists := layout.Offset(field)
-				assert.True(t, exists, "Field %s not found in layout", field)
+				offset := layout.Offset(field)
 				if offset > lastOffset {
 					fields = append(fields, field)
 					lastOffset = offset
@@ -96,8 +95,7 @@ func TestNewLayout(t *testing.T) {
 
 			// Verify alignments
 			for field, expectedAlign := range tt.expectedAlign {
-				offset, exists := layout.Offset(field)
-				assert.True(t, exists, "Field %s not found in layout", field)
+				offset := layout.Offset(field)
 				assert.Equal(t, 0, offset%expectedAlign,
 					"Field %s is not properly aligned. Offset: %d, Required alignment: %d",
 					field, offset, expectedAlign)
@@ -124,21 +122,9 @@ func TestNewLayoutFromMetadata(t *testing.T) {
 
 	// Verify offsets
 	for field, expectedOffset := range offsets {
-		offset, exists := layout.Offset(field)
-		assert.True(t, exists, "Field %s not found", field)
+		offset := layout.Offset(field)
 		assert.Equal(t, expectedOffset, offset, "Offset mismatch for field %s", field)
 	}
-}
-
-func TestLayoutOffsetErrors(t *testing.T) {
-	schema := NewSchema()
-	schema.AddIntField("id")
-	layout := NewLayout(schema)
-
-	// Test non-existent field
-	offset, exists := layout.Offset("nonexistent")
-	assert.False(t, exists, "Expected false for non-existent field")
-	assert.Equal(t, 0, offset, "Expected 0 offset for non-existent field")
 }
 
 func TestLayoutPaddingOptimization(t *testing.T) {
@@ -183,7 +169,7 @@ func TestLayoutPaddingOptimization(t *testing.T) {
 
 			// Verify all fields are properly aligned
 			for _, field := range schema.Fields() {
-				offset, _ := layout.Offset(field)
+				offset := layout.Offset(field)
 				alignment := alignmentRequirement(schema.Type(field))
 				assert.Equal(t, 0, offset%alignment,
 					"Field %s not properly aligned. Offset: %d, Required alignment: %d",
