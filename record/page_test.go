@@ -17,7 +17,7 @@ func setupTestEnv(t *testing.T) (*tx.Transaction, *file.BlockId, *Layout, func()
 	dbDir := t.TempDir()
 
 	// Initialize managers
-	fm, err := file.NewManager(dbDir, 400)
+	fm, err := file.NewManager(dbDir, 800)
 	assert.NoError(t, err)
 
 	lm, err := log.NewManager(fm, "test")
@@ -165,10 +165,19 @@ func TestPageSlotManagement(t *testing.T) {
 		assert.NoError(t, err)
 		assert.True(t, slot2 > slot1)
 
-		// Find next used slot
+		// Insert third record
+		slot3, err := page.InsertAfter(slot2)
+		assert.NoError(t, err)
+		assert.True(t, slot3 > slot2)
+
+		// Delete the second record
+		err = page.Delete(slot2)
+		assert.NoError(t, err)
+
+		// Find next used slot after the first record. Should be the third record (since second is deleted)
 		nextSlot, err := page.NextAfter(slot1)
 		assert.NoError(t, err)
-		assert.Equal(t, slot2, nextSlot)
+		assert.Equal(t, slot3, nextSlot)
 	})
 
 	t.Run("Delete and Reuse", func(t *testing.T) {
