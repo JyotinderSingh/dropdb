@@ -57,7 +57,7 @@ func (p *Page) SetLong(offset int, n int64) {
 
 // GetBytes retrieves a byte slice from the buffer starting at the specified offset.
 func (p *Page) GetBytes(offset int) []byte {
-	length := binary.BigEndian.Uint32(p.buffer[offset:])
+	length := p.GetInt(offset)
 	start := offset + utils.IntSize
 	end := start + int(length)
 	b := make([]byte, length)
@@ -68,7 +68,7 @@ func (p *Page) GetBytes(offset int) []byte {
 // SetBytes writes a byte slice to the buffer starting at the specified offset.
 func (p *Page) SetBytes(offset int, b []byte) {
 	length := len(b)
-	binary.BigEndian.PutUint32(p.buffer[offset:], uint32(length))
+	p.SetInt(offset, length)
 	start := offset + utils.IntSize
 	copy(p.buffer[start:], b)
 }
