@@ -36,8 +36,8 @@ type UpdateScan interface {
 	Delete() error
 
 	// GetRecordID returns the record ID of the current record.
-	GetRecordID() record.ID
+	GetRecordID() *record.ID
 
 	// MoveToRecordID moves the scan to the record with the specified record ID.
-	MoveToRecordID(rid record.ID) error
+	MoveToRecordID(rid *record.ID) error
 }

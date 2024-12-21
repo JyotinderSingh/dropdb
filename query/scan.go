@@ -9,7 +9,7 @@ type Scan interface {
 	BeforeFirst() error
 
 	// Next moves to the next record in the scan. It returns false if there are no more records to scan.
-	Next() bool
+	Next() (bool, error)
 
 	// GetInt returns the integer value of the specified field in the current record.
 	GetInt(fieldName string) (int, error)

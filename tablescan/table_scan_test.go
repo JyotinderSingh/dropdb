@@ -230,7 +230,7 @@ func TestTableScan_RecordID(t *testing.T) {
 	require.NoError(t, err)
 
 	// Move back to first record using RID
-	err = ts.MoveToRecordID(*rid)
+	err = ts.MoveToRecordID(rid)
 	require.NoError(t, err)
 
 	// Verify it's the correct record

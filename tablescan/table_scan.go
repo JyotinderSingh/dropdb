@@ -11,6 +11,9 @@ import (
 
 const fileExtension = ".tbl"
 
+// Ensure TableScan implements the UpdateScan interface.
+var _ query.UpdateScan = (*TableScan)(nil)
+
 // TableScan provides the abstraction of an arbitrarily large array of records.
 type TableScan struct {
 	query.UpdateScan
@@ -229,7 +232,7 @@ func (ts *TableScan) GetRecordID() *record.ID {
 	return record.NewID(ts.recordPage.Block().Number(), ts.currentSlot)
 }
 
-func (ts *TableScan) MoveToRecordID(rid record.ID) error {
+func (ts *TableScan) MoveToRecordID(rid *record.ID) error {
 	if err := ts.Close(); err != nil {
 		return fmt.Errorf("close current page: %w", err)
 	}
