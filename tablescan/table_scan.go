@@ -66,7 +66,7 @@ func (ts *TableScan) Next() (bool, error) {
 		if err := ts.moveToBlock(ts.recordPage.Block().Number() + 1); err != nil {
 			return false, err
 		}
-		if slot, err = ts.recordPage.NextAfter(-1); err != nil {
+		if slot, err = ts.recordPage.NextAfter(ts.currentSlot); err != nil {
 			return false, err
 		}
 	}
@@ -211,7 +211,7 @@ func (ts *TableScan) Insert() error {
 			}
 		}
 
-		slot, err = ts.recordPage.InsertAfter(-1) // Start from beginning of new block
+		slot, err = ts.recordPage.InsertAfter(ts.currentSlot) // Start from beginning of new block
 		if err != nil {
 			return fmt.Errorf("insert in new block: %w", err)
 		}
