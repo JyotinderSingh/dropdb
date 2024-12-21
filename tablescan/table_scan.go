@@ -55,6 +55,11 @@ func (ts *TableScan) BeforeFirst() error {
 	return ts.moveToBlock(0)
 }
 
+// Next moves the scan to the next record in the table.
+// It returns false if there are no more records to scan.
+// Internally, it moves to the next slot in the current block.
+// If there are no more slots in the block, it moves to the next block.
+// If there are no more blocks, it returns false.
 func (ts *TableScan) Next() (bool, error) {
 	slot, err := ts.recordPage.NextAfter(ts.currentSlot)
 
@@ -66,6 +71,7 @@ func (ts *TableScan) Next() (bool, error) {
 		if atLastBlock {
 			return false, nil
 		}
+		// Move to the next block in the file, and load it into the record page. This will also move to the first slot.
 		if err := ts.moveToBlock(ts.recordPage.Block().Number() + 1); err != nil {
 			return false, err
 		}
@@ -194,10 +200,12 @@ func (ts *TableScan) Close() error {
 	return nil
 }
 
+// Insert inserts a new record somewhere in the scan.
+// If there is no room in the current block, it moves to the next block.
+// If there are no more blocks, it creates a new block.
 func (ts *TableScan) Insert() error {
 	slot, err := ts.recordPage.InsertAfter(ts.currentSlot)
 
-	// Key change: match Java's behavior for handling InsertAfter
 	if err != nil {
 		atLastBlock, err := ts.atLastBlock()
 		if err != nil {
@@ -209,6 +217,7 @@ func (ts *TableScan) Insert() error {
 				return fmt.Errorf("move to new block: %w", err)
 			}
 		} else {
+			// Move to the next block in the file, and load it into the record page. This will also move to the first slot.
 			if err := ts.moveToBlock(ts.recordPage.Block().Number() + 1); err != nil {
 				return fmt.Errorf("move to next block: %w", err)
 			}
@@ -275,7 +284,7 @@ func (ts *TableScan) moveToBlock(blockNum int) error {
 	return nil
 }
 
-// moveToNewBlock moves the scan to a new block.
+// moveToNewBlock moves the scan to a new block. It appends a new block to the file and loads it into the record page.
 func (ts *TableScan) moveToNewBlock() error {
 	if err := ts.Close(); err != nil {
 		return fmt.Errorf("close current page: %w", err)
