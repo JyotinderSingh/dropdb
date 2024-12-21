@@ -9,7 +9,7 @@ type UpdateScan interface {
 	Scan
 
 	// SetVal sets the value of the specified field in the current record.
-	SetVal(fieldName string, val Constant) error
+	SetVal(fieldName string, val any) error
 
 	// SetInt sets the integer value of the specified field in the current record.
 	SetInt(fieldName string, val int) error

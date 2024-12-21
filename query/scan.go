@@ -33,7 +33,7 @@ type Scan interface {
 	HasField(fieldName string) bool
 
 	// GetVal returns the value of the specified field in the current record.
-	GetVal(fieldName string) (Constant, error)
+	GetVal(fieldName string) (any, error)
 
 	// Close closes the scan and its subscans, if any.
 	Close() error

@@ -102,30 +102,30 @@ func (ts *TableScan) GetDate(fieldName string) (time.Time, error) {
 	return ts.recordPage.GetDate(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetVal(fieldName string) (query.Constant, error) {
+func (ts *TableScan) GetVal(fieldName string) (any, error) {
 	fieldType := ts.layout.Schema().Type(fieldName)
 
 	switch fieldType {
 	case record.Integer:
 		val, err := ts.GetInt(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	case record.Long:
 		val, err := ts.GetLong(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	case record.Short:
 		val, err := ts.GetShort(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	case record.Varchar:
 		val, err := ts.GetString(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	case record.Boolean:
 		val, err := ts.GetBool(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	case record.Date:
 		val, err := ts.GetDate(fieldName)
-		return query.NewConstant(val), err
+		return val, err
 	default:
-		return query.Constant{}, fmt.Errorf("unsupported field type: %v", fieldType)
+		return nil, fmt.Errorf("unsupported field type: %v", fieldType)
 	}
 }
 
@@ -153,30 +153,30 @@ func (ts *TableScan) SetDate(fieldName string, val time.Time) error {
 	return ts.recordPage.SetDate(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetVal(fieldName string, val query.Constant) error {
+func (ts *TableScan) SetVal(fieldName string, val any) error {
 	switch ts.layout.Schema().Type(fieldName) {
 	case record.Integer:
-		if v, ok := val.AsInt(); ok {
+		if v, ok := val.(int); ok {
 			return ts.SetInt(fieldName, v)
 		}
 	case record.Long:
-		if v, ok := val.AsLong(); ok {
+		if v, ok := val.(int64); ok {
 			return ts.SetLong(fieldName, v)
 		}
 	case record.Short:
-		if v, ok := val.AsShort(); ok {
+		if v, ok := val.(int16); ok {
 			return ts.SetShort(fieldName, v)
 		}
 	case record.Varchar:
-		if v, ok := val.AsString(); ok {
+		if v, ok := val.(string); ok {
 			return ts.SetString(fieldName, v)
 		}
 	case record.Boolean:
-		if v, ok := val.AsBool(); ok {
+		if v, ok := val.(bool); ok {
 			return ts.SetBool(fieldName, v)
 		}
 	case record.Date:
-		if v, ok := val.AsDate(); ok {
+		if v, ok := val.(time.Time); ok {
 			return ts.SetDate(fieldName, v)
 		}
 	}
