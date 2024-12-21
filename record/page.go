@@ -197,7 +197,7 @@ func (p *Page) Block() *file.BlockId {
 
 // isValidSlot returns true if the slot is within the block's capacity.
 func (p *Page) isValidSlot(slot int) bool {
-	return p.offset(slot+1) <= p.tx.BlockSize()
+	return slot >= 0 && p.offset(slot+1) <= p.tx.BlockSize()
 }
 
 // offset returns the offset of the specified slot.
