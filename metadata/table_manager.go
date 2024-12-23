@@ -134,3 +134,97 @@ func (tm *TableManager) TableCatalogLayout() *record.Layout {
 func (tm *TableManager) FieldCatalogLayout() *record.Layout {
 	return tm.fieldCatalogLayout
 }
+
+// GetLayout returns the layout of the specified table from the catalog.
+func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record.Layout, error) {
+	size := -1
+
+	// Read the slot size from the table catalog
+	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTableName, tm.tableCatalogLayout)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		hasNext, err := tableCatalog.Next()
+		if err != nil {
+			return nil, err
+		}
+		if !hasNext {
+			// no more rows
+			break
+		}
+
+		currentTableName, err := tableCatalog.GetString(tableNameField)
+		if err != nil {
+			return nil, err
+		}
+
+		if currentTableName == tableName {
+			size, err = tableCatalog.GetInt(slotSizeField)
+			if err != nil {
+				return nil, err
+			}
+			break
+		}
+	}
+	if err := tableCatalog.Close(); err != nil {
+		return nil, err
+	}
+
+	schema := record.NewSchema()
+	offsets := make(map[string]int)
+
+	// Read the fields from the field catalog
+	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTableName, tm.fieldCatalogLayout)
+	if err != nil {
+		return nil, err
+	}
+
+	for {
+		hasNext, err := fieldCatalog.Next()
+		if err != nil {
+			return nil, err
+		}
+		if !hasNext {
+			break
+		}
+
+		currentTableName, err := fieldCatalog.GetString(tableNameField)
+		if err != nil {
+			return nil, err
+		}
+		if currentTableName != tableName {
+			// Skip all other tables
+			continue
+		}
+
+		fieldName, err := fieldCatalog.GetString(fieldNameField)
+		if err != nil {
+			return nil, err
+		}
+
+		fieldType, err := fieldCatalog.GetInt(typeField)
+		if err != nil {
+			return nil, err
+		}
+
+		fieldLength, err := fieldCatalog.GetInt(lengthField)
+		if err != nil {
+			return nil, err
+		}
+
+		fieldOffset, err := fieldCatalog.GetInt(offsetField)
+		if err != nil {
+			return nil, err
+		}
+
+		schema.AddField(fieldName, record.SchemaType(fieldType), fieldLength)
+		offsets[fieldName] = fieldOffset
+	}
+	if err := fieldCatalog.Close(); err != nil {
+		return nil, err
+	}
+
+	return record.NewLayoutFromMetadata(schema, offsets, size), nil
+}

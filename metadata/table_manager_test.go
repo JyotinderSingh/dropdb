@@ -160,3 +160,96 @@ func TestTableManager_CreateMultipleTables(t *testing.T) {
 
 	assert.Empty(t, tables)
 }
+
+func TestTableManager_GetLayout(t *testing.T) {
+	tm, txn, cleanup := setupTestMetadata(t)
+	defer cleanup()
+
+	// Define and create a table schema
+	schema := record.NewSchema()
+	schema.AddIntField("id")
+	schema.AddStringField("name", 20)
+	schema.AddBoolField("active")
+
+	tableName := "test_table"
+	err := tm.CreateTable(tableName, schema, txn)
+	require.NoError(t, err)
+
+	// Retrieve the layout using GetLayout
+	layout, err := tm.GetLayout(tableName, txn)
+	require.NoError(t, err)
+
+	// Validate that slot size is correctly retrieved
+	expectedSlotSize := layout.SlotSize()
+	tableCatalogScan, err := tablescan.NewTableScan(txn, tableCatalogTableName, tm.TableCatalogLayout())
+	require.NoError(t, err)
+	defer tableCatalogScan.Close()
+
+	err = tableCatalogScan.BeforeFirst()
+	require.NoError(t, err)
+
+	foundTable := false
+	for {
+		hasNext, err := tableCatalogScan.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+
+		tName, err := tableCatalogScan.GetString("table_name")
+		require.NoError(t, err)
+
+		if tName == tableName {
+			foundTable = true
+			slotSize, err := tableCatalogScan.GetInt("slot_size")
+			require.NoError(t, err)
+			assert.Equal(t, expectedSlotSize, slotSize, "Slot size mismatch")
+		}
+	}
+	assert.True(t, foundTable, "Table not found in table_catalog")
+
+	// Validate schema metadata in field catalog
+	fieldCatalogScan, err := tablescan.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
+	require.NoError(t, err)
+	defer fieldCatalogScan.Close()
+
+	err = fieldCatalogScan.BeforeFirst()
+	require.NoError(t, err)
+
+	expectedFields := map[string]struct {
+		fieldType record.SchemaType
+		length    int
+	}{
+		"id":     {record.Integer, 0},
+		"name":   {record.Varchar, 20},
+		"active": {record.Boolean, 0},
+	}
+
+	for {
+		hasNext, err := fieldCatalogScan.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+
+		tName, err := fieldCatalogScan.GetString("table_name")
+		require.NoError(t, err)
+
+		if tName == tableName {
+			fieldName, err := fieldCatalogScan.GetString("field_name")
+			require.NoError(t, err)
+
+			fieldType, err := fieldCatalogScan.GetInt("type")
+			require.NoError(t, err)
+
+			fieldLength, err := fieldCatalogScan.GetInt("length")
+			require.NoError(t, err)
+
+			assert.Contains(t, expectedFields, fieldName, "Unexpected field in field_catalog")
+
+			expected := expectedFields[fieldName]
+			assert.Equal(t, int(expected.fieldType), fieldType, "Field type mismatch")
+			assert.Equal(t, expected.length, fieldLength, "Field length mismatch")
+		}
+	}
+}
