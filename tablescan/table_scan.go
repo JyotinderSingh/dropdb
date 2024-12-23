@@ -193,6 +193,8 @@ func (ts *TableScan) HasField(fieldName string) bool {
 	return ts.layout.Schema().HasField(fieldName)
 }
 
+// Close closes the scan.
+// Unpins the current record page.
 func (ts *TableScan) Close() error {
 	if ts.recordPage != nil {
 		ts.tx.Unpin(ts.recordPage.Block())
@@ -204,33 +206,35 @@ func (ts *TableScan) Close() error {
 // If there is no room in the current block, it moves to the next block.
 // If there are no more blocks, it creates a new block.
 func (ts *TableScan) Insert() error {
-	slot, err := ts.recordPage.InsertAfter(ts.currentSlot)
+	for {
+		slot, err := ts.recordPage.InsertAfter(ts.currentSlot)
+		if err == nil {
+			// Successfully inserted
+			ts.currentSlot = slot
+			return nil
+		}
 
-	if err != nil {
-		atLastBlock, err := ts.atLastBlock()
-		if err != nil {
-			return fmt.Errorf("checking last block: %w", err)
+		// Check if we are at the last block.
+		atLastBlock, err2 := ts.atLastBlock()
+		if err2 != nil {
+			return fmt.Errorf("checking last block: %w", err2)
 		}
 
 		if atLastBlock {
+			// If it's the last block, append a new block and format it.
 			if err := ts.moveToNewBlock(); err != nil {
 				return fmt.Errorf("move to new block: %w", err)
 			}
 		} else {
-			// Move to the next block in the file, and load it into the record page. This will also move to the first slot.
-			if err := ts.moveToBlock(ts.recordPage.Block().Number() + 1); err != nil {
+			// Otherwise, move to the next block in the file and try again.
+			nextBlockNum := ts.recordPage.Block().Number() + 1
+			if err := ts.moveToBlock(nextBlockNum); err != nil {
 				return fmt.Errorf("move to next block: %w", err)
 			}
 		}
 
-		slot, err = ts.recordPage.InsertAfter(ts.currentSlot) // Start from beginning of new block
-		if err != nil {
-			return fmt.Errorf("insert in new block: %w", err)
-		}
+		// We’ll loop again and try the InsertAfter in the newly pinned page.
 	}
-
-	ts.currentSlot = slot
-	return nil
 }
 
 func (ts *TableScan) Delete() error {
