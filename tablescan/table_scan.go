@@ -26,6 +26,10 @@ type TableScan struct {
 
 // NewTableScan creates a new table scan
 func NewTableScan(tx *tx.Transaction, tableName string, layout *record.Layout) (*TableScan, error) {
+	if layout.SlotSize() > tx.BlockSize() {
+		return nil, fmt.Errorf("record slot size (%d) exceeds block size (%d)", layout.SlotSize(), tx.BlockSize())
+	}
+
 	ts := &TableScan{
 		tx:          tx,
 		layout:      layout,
@@ -206,6 +210,10 @@ func (ts *TableScan) Close() error {
 // If there is no room in the current block, it moves to the next block.
 // If there are no more blocks, it creates a new block.
 func (ts *TableScan) Insert() error {
+	if ts.layout.SlotSize() > ts.tx.BlockSize() {
+		return fmt.Errorf("record slot size (%d) exceeds block size (%d)", ts.layout.SlotSize(), ts.tx.BlockSize())
+	}
+
 	for {
 		slot, err := ts.recordPage.InsertAfter(ts.currentSlot)
 		if err == nil {

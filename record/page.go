@@ -116,6 +116,10 @@ func (p *Page) Delete(slot int) error {
 // Format uses the layout to format a new block of records.
 // Note: These values are not logged (because the old values are meaningless).
 func (p *Page) Format() error {
+	if p.layout.SlotSize() > p.tx.BlockSize() {
+		return fmt.Errorf("record slot size (%d) exceeds block size (%d)", p.layout.SlotSize(), p.tx.BlockSize())
+	}
+
 	slot := 0
 	for p.isValidSlot(slot) {
 		err := p.tx.SetInt(p.block, p.offset(slot), FlagEmpty, false)
