@@ -200,7 +200,7 @@ func (ts *TableScan) Close() error {
 	return nil
 }
 
-// Insert inserts a new record somewhere in the scan.
+// Insert inserts a new record somewhere in the scan and moves the scan to the new record.
 // If there is no room in the current block, it moves to the next block.
 // If there are no more blocks, it creates a new block.
 func (ts *TableScan) Insert() error {
