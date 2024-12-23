@@ -199,11 +199,10 @@ func (ts *TableScan) HasField(fieldName string) bool {
 
 // Close closes the scan.
 // Unpins the current record page.
-func (ts *TableScan) Close() error {
+func (ts *TableScan) Close() {
 	if ts.recordPage != nil {
 		ts.tx.Unpin(ts.recordPage.Block())
 	}
-	return nil
 }
 
 // Insert inserts a new record somewhere in the scan and moves the scan to the new record.
@@ -254,9 +253,7 @@ func (ts *TableScan) GetRecordID() *record.ID {
 }
 
 func (ts *TableScan) MoveToRecordID(rid *record.ID) error {
-	if err := ts.Close(); err != nil {
-		return fmt.Errorf("close current page: %w", err)
-	}
+	ts.Close()
 
 	blk := &file.BlockId{
 		File:        ts.fileName,
@@ -277,9 +274,7 @@ func (ts *TableScan) MoveToRecordID(rid *record.ID) error {
 
 // moveToBlock moves the scan to the specified block number.
 func (ts *TableScan) moveToBlock(blockNum int) error {
-	if err := ts.Close(); err != nil {
-		return fmt.Errorf("close current page: %w", err)
-	}
+	ts.Close()
 
 	blk := &file.BlockId{
 		File:        ts.fileName,
@@ -298,9 +293,7 @@ func (ts *TableScan) moveToBlock(blockNum int) error {
 
 // moveToNewBlock moves the scan to a new block. It appends a new block to the file and loads it into the record page.
 func (ts *TableScan) moveToNewBlock() error {
-	if err := ts.Close(); err != nil {
-		return fmt.Errorf("close current page: %w", err)
-	}
+	ts.Close()
 
 	blk, err := ts.tx.Append(ts.fileName)
 	if err != nil {

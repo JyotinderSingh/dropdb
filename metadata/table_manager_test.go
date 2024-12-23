@@ -80,12 +80,7 @@ func TestTableManager_CreateTable(t *testing.T) {
 	// Verify the field catalog contains metadata for `test_table` and system catalogs
 	ts, err = tablescan.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
 	require.NoError(t, err)
-	defer func(ts *tablescan.TableScan) {
-		err := ts.Close()
-		if err != nil {
-			assert.Fail(t, "failed to close table scan")
-		}
-	}(ts)
+	defer ts.Close()
 
 	err = ts.BeforeFirst()
 	require.NoError(t, err)
@@ -134,12 +129,7 @@ func TestTableManager_CreateMultipleTables(t *testing.T) {
 
 	ts, err := tablescan.NewTableScan(txn, "table_catalog", tm.TableCatalogLayout())
 	require.NoError(t, err)
-	defer func(ts *tablescan.TableScan) {
-		err := ts.Close()
-		if err != nil {
-			assert.Fail(t, "failed to close table scan")
-		}
-	}(ts)
+	defer ts.Close()
 
 	err = ts.BeforeFirst()
 	require.NoError(t, err)

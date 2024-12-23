@@ -82,6 +82,7 @@ func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName str
 	if err != nil {
 		return err
 	}
+	defer tableCatalog.Close()
 
 	if err := tableCatalog.Insert(); err != nil {
 		return err
@@ -92,8 +93,7 @@ func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName str
 	if err := tableCatalog.SetInt(slotSizeField, layout.SlotSize()); err != nil {
 		return err
 	}
-
-	return tableCatalog.Close()
+	return nil
 }
 
 // insertIntoFieldCatalog inserts schema fields into the field catalog.
@@ -102,6 +102,7 @@ func (tm *TableManager) insertIntoFieldCatalog(tx *tx.Transaction, tableName str
 	if err != nil {
 		return err
 	}
+	defer fieldCatalog.Close()
 
 	for _, field := range schema.Fields() {
 		if err := fieldCatalog.Insert(); err != nil {
@@ -124,7 +125,7 @@ func (tm *TableManager) insertIntoFieldCatalog(tx *tx.Transaction, tableName str
 		}
 	}
 
-	return fieldCatalog.Close()
+	return nil
 }
 
 func (tm *TableManager) TableCatalogLayout() *record.Layout {
@@ -144,6 +145,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	if err != nil {
 		return nil, err
 	}
+	defer tableCatalog.Close()
 
 	for {
 		hasNext, err := tableCatalog.Next()
@@ -168,9 +170,6 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 			break
 		}
 	}
-	if err := tableCatalog.Close(); err != nil {
-		return nil, err
-	}
 
 	schema := record.NewSchema()
 	offsets := make(map[string]int)
@@ -180,6 +179,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	if err != nil {
 		return nil, err
 	}
+	defer fieldCatalog.Close()
 
 	for {
 		hasNext, err := fieldCatalog.Next()
@@ -221,9 +221,6 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 
 		schema.AddField(fieldName, record.SchemaType(fieldType), fieldLength)
 		offsets[fieldName] = fieldOffset
-	}
-	if err := fieldCatalog.Close(); err != nil {
-		return nil, err
 	}
 
 	return record.NewLayoutFromMetadata(schema, offsets, size), nil

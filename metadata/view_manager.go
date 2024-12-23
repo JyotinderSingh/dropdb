@@ -1,6 +1,7 @@
 package metadata
 
 import (
+	"fmt"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/tablescan"
 	"github.com/JyotinderSingh/dropdb/tx"
@@ -44,6 +45,7 @@ func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transa
 	if err != nil {
 		return err
 	}
+	defer viewCatalogTableScan.Close()
 
 	if err := viewCatalogTableScan.Insert(); err != nil {
 		return err
@@ -51,16 +53,11 @@ func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transa
 	if err := viewCatalogTableScan.SetString(viewNameField, viewName); err != nil {
 		return err
 	}
-	if err := viewCatalogTableScan.SetString(viewDefinitionField, viewDefinition); err != nil {
-		return err
-	}
-
-	return viewCatalogTableScan.Close()
+	return viewCatalogTableScan.SetString(viewDefinitionField, viewDefinition)
 }
 
 // GetViewDefinition returns the definition of the specified view.
 func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (string, error) {
-	var result string
 	layout, err := vm.tableManager.GetLayout(viewCatalogTableName, tx)
 	if err != nil {
 		return "", err
@@ -70,6 +67,7 @@ func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (s
 	if err != nil {
 		return "", err
 	}
+	defer viewCatalogTableScan.Close()
 
 	for {
 		hasNext, err := viewCatalogTableScan.Next()
@@ -91,14 +89,9 @@ func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (s
 				return "", err
 			}
 
-			result = definition
-			break
+			return definition, nil
 		}
 	}
 
-	if err := viewCatalogTableScan.Close(); err != nil {
-		return "", err
-	}
-
-	return result, nil
+	return "", fmt.Errorf("view not found: %s", viewName)
 }
