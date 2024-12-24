@@ -17,7 +17,7 @@ DropDB is built incrementally, with the following features implemented or planne
   - Basic transaction handling with support for atomicity and durability.
 - [x] Record Management  
   - Management of records with efficient access and updates.
-- [ ] Metadata Management  
+- [x] Metadata Management  
   - Systems to manage schema, table definitions, and data organization.
 - [ ] Query Processing  
   - Execution of SQL-like queries with optimized operators.
@@ -42,6 +42,8 @@ DropDB is built incrementally, with the following features implemented or planne
     - `int`, `short`, `long`, `string`, `bool`, and `date`.
 - **On-Disk Layout Optimizations**  
   Optimized disk storage to ensure byte alignment and minimize padding, improving overall performance.
+- **Statistics**
+  Maintains statistics about the database for query planning, such as read costs, distinct records, and more.
 
 ## Project Motivation
 This project serves as a hands-on journey to deeply understand the principles of database design and implementation. By replicating the structure outlined in Sciore's book, DropDB allows for experimentation and learning about real-world database challenges and solutions.
