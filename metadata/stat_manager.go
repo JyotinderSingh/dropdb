@@ -15,8 +15,8 @@ type StatManager struct {
 	refreshLimit int
 }
 
-// NewStatMgr creates a new StatManager instance, initializing statistics by scanning the entire database.
-func NewStatMgr(tableManager *TableManager, transaction *tx.Transaction, refreshLimit int) (*StatManager, error) {
+// NewStatManager creates a new StatManager instance, initializing statistics by scanning the entire database.
+func NewStatManager(tableManager *TableManager, transaction *tx.Transaction, refreshLimit int) (*StatManager, error) {
 	statMgr := &StatManager{
 		tableManager: tableManager,
 		tableStats:   make(map[string]*StatInfo),

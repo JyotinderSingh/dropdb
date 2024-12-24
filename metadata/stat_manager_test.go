@@ -13,7 +13,7 @@ import (
 // setupStatMgr initializes a StatManager for testing.
 func setupStatMgr(t *testing.T, refreshLimit int) (*StatManager, *TableManager, *tx.Transaction, func()) {
 	tm, txn, cleanup := setupTestMetadata(400, t)
-	statMgr, err := NewStatMgr(tm, txn, refreshLimit)
+	statMgr, err := NewStatManager(tm, txn, refreshLimit)
 	require.NoError(t, err)
 	return statMgr, tm, txn, cleanup
 }

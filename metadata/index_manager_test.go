@@ -14,7 +14,7 @@ func setupIndexManagerTest(t *testing.T) (*TableManager, *IndexManager, *tx.Tran
 	t.Helper()
 
 	tm, txn, cleanup := setupTestMetadata(400, t)
-	sm, err := NewStatMgr(tm, txn, 100)
+	sm, err := NewStatManager(tm, txn, 100)
 	require.NoError(t, err)
 	indexManager, err := NewIndexManager(true, tm, sm, txn)
 	require.NoError(t, err)
