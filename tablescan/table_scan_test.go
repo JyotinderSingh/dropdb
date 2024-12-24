@@ -35,7 +35,7 @@ func setupTestTable(t *testing.T) (*TableScan, *tx.Transaction, func()) {
 	lt := concurrency.NewLockTable()
 
 	// Create transaction
-	tx := tx.NewTransaction(fm, lm, bm, lt)
+	transaction := tx.NewTransaction(fm, lm, bm, lt)
 
 	// Create schema
 	schema := record.NewSchema()
@@ -50,12 +50,12 @@ func setupTestTable(t *testing.T) (*TableScan, *tx.Transaction, func()) {
 	layout := record.NewLayout(schema)
 
 	// Create table scan
-	ts, err := NewTableScan(tx, "test_table", layout)
+	ts, err := NewTableScan(transaction, "test_table", layout)
 	require.NoError(t, err)
 
 	cleanup := func() {
 		ts.Close()
-		if err := tx.Commit(); err != nil {
+		if err := transaction.Commit(); err != nil {
 			t.Error(err)
 		}
 		if err := os.RemoveAll(dbDir); err != nil {
@@ -63,7 +63,7 @@ func setupTestTable(t *testing.T) (*TableScan, *tx.Transaction, func()) {
 		}
 	}
 
-	return ts, tx, cleanup
+	return ts, transaction, cleanup
 }
 
 func TestTableScan_InsertAndRetrieve(t *testing.T) {
