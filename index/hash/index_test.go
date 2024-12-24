@@ -39,8 +39,12 @@ func setupHashIndexTest(t *testing.T) (*Index, *tx.Transaction, func()) {
 
 	cleanup := func() {
 		hashIndex.Close()
-		transaction.Commit()
-		os.RemoveAll(dbDir)
+		if err := transaction.Commit(); err != nil {
+			t.Error(err)
+		}
+		if err := os.RemoveAll(dbDir); err != nil {
+			t.Error(err)
+		}
 	}
 
 	return hashIndex, transaction, cleanup
@@ -129,6 +133,10 @@ func TestHashIndex_Insert(t *testing.T) {
 	id, err := hashIndex.GetDataRecordID()
 	require.NoError(t, err)
 	assert.Equal(t, dataRecordID, id)
+
+	currentValue, err := hashIndex.tableScan.GetString("data_value")
+	require.NoError(t, err)
+	assert.Equal(t, "test_key", currentValue)
 }
 
 func TestHashIndex_Delete(t *testing.T) {

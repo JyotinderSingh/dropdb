@@ -32,7 +32,10 @@ func setupTestMetadata(blockSize int, t *testing.T) (*TableManager, *tx.Transact
 	require.NoError(t, err)
 
 	cleanup := func() {
-		transaction.Commit()
+		err := transaction.Commit()
+		if err != nil {
+			t.Error(err)
+		}
 	}
 
 	return tm, transaction, cleanup

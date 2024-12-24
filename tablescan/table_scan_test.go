@@ -55,8 +55,12 @@ func setupTestTable(t *testing.T) (*TableScan, *tx.Transaction, func()) {
 
 	cleanup := func() {
 		ts.Close()
-		tx.Commit()
-		os.RemoveAll(dbDir)
+		if err := tx.Commit(); err != nil {
+			t.Error(err)
+		}
+		if err := os.RemoveAll(dbDir); err != nil {
+			t.Error(err)
+		}
 	}
 
 	return ts, tx, cleanup
@@ -293,8 +297,13 @@ func TestTableScanOperations(t *testing.T) {
 
 	bm := buffer.NewManager(fm, lm, 8)
 	lt := concurrency.NewLockTable()
-	tx := tx.NewTransaction(fm, lm, bm, lt)
-	defer tx.Commit()
+	transaction := tx.NewTransaction(fm, lm, bm, lt)
+	defer func(transaction *tx.Transaction) {
+		err := transaction.Commit()
+		if err != nil {
+			t.Error(err)
+		}
+	}(transaction)
 
 	// Create schema and layout
 	schema := record.NewSchema()
@@ -307,12 +316,12 @@ func TestTableScanOperations(t *testing.T) {
 	assert.Equal(t, 16, layout.Offset("B"), "Incorrect offset for field B")
 
 	// Create table scan
-	ts, err := NewTableScan(tx, "T", layout)
+	ts, err := NewTableScan(transaction, "T", layout)
 	require.NoError(t, err)
 	defer ts.Close()
 
 	// Use fixed seed for reproducible tests
-	rand.Seed(42)
+	r := rand.New(rand.NewSource(42))
 
 	// Insert 50 records with known values from fixed seed
 	expectedRecords := make(map[int]string)
@@ -321,7 +330,7 @@ func TestTableScanOperations(t *testing.T) {
 		err := ts.Insert()
 		require.NoError(t, err)
 
-		n := rand.Intn(51) // 0 to 50
+		n := r.Intn(51) // 0 to 50
 		err = ts.SetInt("A", n)
 		require.NoError(t, err)
 
