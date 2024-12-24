@@ -11,7 +11,7 @@ const (
 	maxViewDefinitionLength = 100
 	viewNameField           = "view_name"
 	viewDefinitionField     = "view_definition"
-	viewCatalogTableName    = "view_catalog"
+	viewCatalogTable        = "view_catalog"
 )
 
 type ViewManager struct {
@@ -26,7 +26,7 @@ func NewViewManager(isNew bool, tableManager *TableManager, tx *tx.Transaction) 
 		schema := record.NewSchema()
 		schema.AddStringField(viewNameField, maxNameLength)
 		schema.AddStringField(viewDefinitionField, maxViewDefinitionLength)
-		if err := vm.tableManager.CreateTable(viewCatalogTableName, schema, tx); err != nil {
+		if err := vm.tableManager.CreateTable(viewCatalogTable, schema, tx); err != nil {
 			return nil, err
 		}
 	}
@@ -36,12 +36,12 @@ func NewViewManager(isNew bool, tableManager *TableManager, tx *tx.Transaction) 
 
 // CreateView creates a view.
 func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transaction) error {
-	layout, err := vm.tableManager.GetLayout(viewCatalogTableName, tx)
+	layout, err := vm.tableManager.GetLayout(viewCatalogTable, tx)
 	if err != nil {
 		return err
 	}
 
-	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTableName, layout)
+	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTable, layout)
 	if err != nil {
 		return err
 	}
@@ -58,12 +58,12 @@ func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transa
 
 // GetViewDefinition returns the definition of the specified view.
 func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (string, error) {
-	layout, err := vm.tableManager.GetLayout(viewCatalogTableName, tx)
+	layout, err := vm.tableManager.GetLayout(viewCatalogTable, tx)
 	if err != nil {
 		return "", err
 	}
 
-	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTableName, layout)
+	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTable, layout)
 	if err != nil {
 		return "", err
 	}

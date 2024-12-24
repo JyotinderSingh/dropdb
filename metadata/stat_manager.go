@@ -7,7 +7,7 @@ import (
 	"sync"
 )
 
-type StatMgr struct {
+type StatManager struct {
 	tableManager *TableManager
 	tableStats   map[string]*StatInfo
 	numCalls     int
@@ -15,9 +15,9 @@ type StatMgr struct {
 	refreshLimit int
 }
 
-// NewStatMgr creates a new StatMgr instance, initializing statistics by scanning the entire database.
-func NewStatMgr(tableManager *TableManager, transaction *tx.Transaction, refreshLimit int) (*StatMgr, error) {
-	statMgr := &StatMgr{
+// NewStatMgr creates a new StatManager instance, initializing statistics by scanning the entire database.
+func NewStatMgr(tableManager *TableManager, transaction *tx.Transaction, refreshLimit int) (*StatManager, error) {
+	statMgr := &StatManager{
 		tableManager: tableManager,
 		tableStats:   make(map[string]*StatInfo),
 		refreshLimit: refreshLimit,
@@ -30,7 +30,7 @@ func NewStatMgr(tableManager *TableManager, transaction *tx.Transaction, refresh
 
 // GetStatInfo returns statistical information about the specified table.
 // It refreshes statistics periodically based on the refreshLimit.
-func (sm *StatMgr) GetStatInfo(tableName string, layout *record.Layout, transaction *tx.Transaction) (*StatInfo, error) {
+func (sm *StatManager) GetStatInfo(tableName string, layout *record.Layout, transaction *tx.Transaction) (*StatInfo, error) {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 
@@ -57,7 +57,7 @@ func (sm *StatMgr) GetStatInfo(tableName string, layout *record.Layout, transact
 
 // RefreshStatistics publicly forces a refresh of all table statistics.
 // This is useful if something external triggers a refresh.
-func (sm *StatMgr) RefreshStatistics(transaction *tx.Transaction) error {
+func (sm *StatManager) RefreshStatistics(transaction *tx.Transaction) error {
 	sm.mu.Lock()
 	defer sm.mu.Unlock()
 	return sm._refreshStatistics(transaction)
@@ -65,17 +65,17 @@ func (sm *StatMgr) RefreshStatistics(transaction *tx.Transaction) error {
 
 // _refreshStatistics recalculates statistics for all tables in the database.
 // It assumes the caller already holds sm.mu.
-func (sm *StatMgr) _refreshStatistics(transaction *tx.Transaction) error {
+func (sm *StatManager) _refreshStatistics(transaction *tx.Transaction) error {
 	// Since the caller already holds the lock, do NOT lock here.
 
 	sm.tableStats = make(map[string]*StatInfo)
 	sm.numCalls = 0
 
-	tableCatalogLayout, err := sm.tableManager.GetLayout(tableCatalogTableName, transaction)
+	tableCatalogLayout, err := sm.tableManager.GetLayout(tableCatalogTable, transaction)
 	if err != nil {
 		return err
 	}
-	tableCatalogTableScan, err := tablescan.NewTableScan(transaction, tableCatalogTableName, tableCatalogLayout)
+	tableCatalogTableScan, err := tablescan.NewTableScan(transaction, tableCatalogTable, tableCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -111,7 +111,7 @@ func (sm *StatMgr) _refreshStatistics(transaction *tx.Transaction) error {
 }
 
 // calcTableStats calculates the number of records, blocks, and distinct values for a specific table.
-func (sm *StatMgr) calcTableStats(tableName string, layout *record.Layout, transaction *tx.Transaction) (*StatInfo, error) {
+func (sm *StatManager) calcTableStats(tableName string, layout *record.Layout, transaction *tx.Transaction) (*StatInfo, error) {
 	numRecords := 0
 	numBlocks := 0
 	distinctValues := make(map[string]map[any]interface{}) // field name -> distinct values

@@ -16,8 +16,8 @@ const (
 	lengthField    = "length"
 	offsetField    = "offset"
 
-	tableCatalogTableName = "table_catalog"
-	fieldCatalogTableName = "field_catalog"
+	tableCatalogTable = "table_catalog"
+	fieldCatalogTable = "field_catalog"
 )
 
 // TableManager manages table data.
@@ -48,10 +48,10 @@ func NewTableManager(isNew bool, tx *tx.Transaction) (*TableManager, error) {
 	tm.fieldCatalogLayout = record.NewLayout(fieldCatalogSchema)
 
 	if isNew {
-		if err := tm.CreateTable(tableCatalogTableName, tableCatalogSchema, tx); err != nil {
+		if err := tm.CreateTable(tableCatalogTable, tableCatalogSchema, tx); err != nil {
 			return nil, fmt.Errorf("failed to create table catalog: %w", err)
 		}
-		if err := tm.CreateTable(fieldCatalogTableName, fieldCatalogSchema, tx); err != nil {
+		if err := tm.CreateTable(fieldCatalogTable, fieldCatalogSchema, tx); err != nil {
 			return nil, fmt.Errorf("failed to create field catalog: %w", err)
 		}
 	}
@@ -78,7 +78,7 @@ func (tm *TableManager) CreateTable(tableName string, schema *record.Schema, tx 
 
 // insertIntoTableCatalog inserts a new record into the table catalog.
 func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName string, layout *record.Layout) error {
-	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTableName, tm.tableCatalogLayout)
+	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName str
 
 // insertIntoFieldCatalog inserts schema fields into the field catalog.
 func (tm *TableManager) insertIntoFieldCatalog(tx *tx.Transaction, tableName string, schema *record.Schema, layout *record.Layout) error {
-	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTableName, tm.fieldCatalogLayout)
+	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	size := -1
 
 	// Read the slot size from the table catalog
-	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTableName, tm.tableCatalogLayout)
+	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	offsets := make(map[string]int)
 
 	// Read the fields from the field catalog
-	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTableName, tm.fieldCatalogLayout)
+	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
 	if err != nil {
 		return nil, err
 	}

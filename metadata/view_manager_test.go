@@ -27,10 +27,10 @@ func TestViewManager_CreateView(t *testing.T) {
 	require.NoError(t, err)
 
 	// Validate the view exists in the view catalog
-	layout, err := vm.tableManager.GetLayout(viewCatalogTableName, txn)
+	layout, err := vm.tableManager.GetLayout(viewCatalogTable, txn)
 	require.NoError(t, err)
 
-	viewCatalogScan, err := tablescan.NewTableScan(txn, viewCatalogTableName, layout)
+	viewCatalogScan, err := tablescan.NewTableScan(txn, viewCatalogTable, layout)
 	require.NoError(t, err)
 	defer viewCatalogScan.Close()
 

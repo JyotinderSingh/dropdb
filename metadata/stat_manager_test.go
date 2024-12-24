@@ -10,8 +10,8 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// setupStatMgr initializes a StatMgr for testing.
-func setupStatMgr(t *testing.T, refreshLimit int) (*StatMgr, *TableManager, *tx.Transaction, func()) {
+// setupStatMgr initializes a StatManager for testing.
+func setupStatMgr(t *testing.T, refreshLimit int) (*StatManager, *TableManager, *tx.Transaction, func()) {
 	tm, txn, cleanup := setupTestMetadata(400, t)
 	statMgr, err := NewStatMgr(tm, txn, refreshLimit)
 	require.NoError(t, err)

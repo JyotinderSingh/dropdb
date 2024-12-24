@@ -171,7 +171,7 @@ func TestTableManager_GetLayout(t *testing.T) {
 
 	// Validate that slot size is correctly retrieved
 	expectedSlotSize := layout.SlotSize()
-	tableCatalogScan, err := tablescan.NewTableScan(txn, tableCatalogTableName, tm.TableCatalogLayout())
+	tableCatalogScan, err := tablescan.NewTableScan(txn, tableCatalogTable, tm.TableCatalogLayout())
 	require.NoError(t, err)
 	defer tableCatalogScan.Close()
 
