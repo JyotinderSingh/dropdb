@@ -19,7 +19,7 @@ DropDB is built incrementally, with the following features implemented or planne
   - Management of records with efficient access and updates.
 - [x] Metadata Management  
   - Systems to manage schema, table definitions, and data organization.
-- [ ] Query Processing  
+- [x] Query Processing  
   - Execution of SQL-like queries with optimized operators.
 - [ ] Query Parsing  
   - Translation of user queries into executable plans.
@@ -44,6 +44,9 @@ DropDB is built incrementally, with the following features implemented or planne
   Optimized disk storage to ensure byte alignment and minimize padding, improving overall performance.
 - **Statistics**
   Maintains statistics about the database for query planning, such as read costs, distinct records, and more.
+- **Flexible Query Expression Support**  
+  Supports a wide range of query expressions among different data types, including:
+    - `=`, `>`, `<`, `>=`, `<=`.
 
 ## Project Motivation
 This project serves as a hands-on journey to deeply understand the principles of database design and implementation. By replicating the structure outlined in Sciore's book, DropDB allows for experimentation and learning about real-world database challenges and solutions.
