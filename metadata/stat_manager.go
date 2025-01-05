@@ -2,7 +2,7 @@ package metadata
 
 import (
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"sync"
 )
@@ -75,7 +75,7 @@ func (sm *StatManager) _refreshStatistics(transaction *tx.Transaction) error {
 	if err != nil {
 		return err
 	}
-	tableCatalogTableScan, err := tablescan.NewTableScan(transaction, tableCatalogTable, tableCatalogLayout)
+	tableCatalogTableScan, err := table.NewTableScan(transaction, tableCatalogTable, tableCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -120,7 +120,7 @@ func (sm *StatManager) calcTableStats(tableName string, layout *record.Layout, t
 		distinctValues[field] = make(map[any]interface{})
 	}
 
-	ts, err := tablescan.NewTableScan(transaction, tableName, layout)
+	ts, err := table.NewTableScan(transaction, tableName, layout)
 	if err != nil {
 		return nil, err
 	}

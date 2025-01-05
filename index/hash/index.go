@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/index"
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"github.com/JyotinderSingh/dropdb/utils"
 )
@@ -22,7 +22,7 @@ type Index struct {
 	indexName   string
 	layout      *record.Layout
 	searchKey   any
-	tableScan   *tablescan.TableScan
+	tableScan   *table.TableScan
 }
 
 // NewIndex opens a hash index for the specified index.
@@ -49,7 +49,7 @@ func (idx *Index) BeforeFirst(searchKey any) error {
 	}
 	bucket := hashValue % numBuckets
 	tableName := fmt.Sprintf("%s-%d", idx.indexName, bucket)
-	idx.tableScan, err = tablescan.NewTableScan(idx.transaction, tableName, idx.layout)
+	idx.tableScan, err = table.NewTableScan(idx.transaction, tableName, idx.layout)
 	return err
 }
 

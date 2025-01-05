@@ -1,4 +1,4 @@
-package tablescan
+package table
 
 import (
 	"fmt"

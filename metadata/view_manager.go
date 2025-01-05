@@ -3,7 +3,7 @@ package metadata
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 )
 
@@ -41,7 +41,7 @@ func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transa
 		return err
 	}
 
-	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTable, layout)
+	viewCatalogTableScan, err := table.NewTableScan(tx, viewCatalogTable, layout)
 	if err != nil {
 		return err
 	}
@@ -63,7 +63,7 @@ func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (s
 		return "", err
 	}
 
-	viewCatalogTableScan, err := tablescan.NewTableScan(tx, viewCatalogTable, layout)
+	viewCatalogTableScan, err := table.NewTableScan(tx, viewCatalogTable, layout)
 	if err != nil {
 		return "", err
 	}

@@ -1,10 +1,10 @@
-package tablescan
+package table
 
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
-	"github.com/JyotinderSingh/dropdb/query"
 	"github.com/JyotinderSingh/dropdb/record"
+	"github.com/JyotinderSingh/dropdb/scan"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"time"
 )
@@ -12,11 +12,10 @@ import (
 const fileExtension = ".tbl"
 
 // Ensure TableScan implements the UpdateScan interface.
-var _ query.UpdateScan = (*TableScan)(nil)
+var _ scan.UpdateScan = (*TableScan)(nil)
 
 // TableScan provides the abstraction of an arbitrarily large array of records.
 type TableScan struct {
-	query.UpdateScan
 	tx          *tx.Transaction
 	layout      *record.Layout
 	recordPage  *record.Page

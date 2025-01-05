@@ -1,9 +1,9 @@
-package query
+package scan
 
 import "time"
 
 // Scan interface will be implemented by each query scan.
-// There is a Scan class for each relational algebra operator.
+// There is a Scan class for each relational algebra Operator.
 type Scan interface {
 	// BeforeFirst positions the scan before the first record. A subsequent call to Next will move to the first record.
 	BeforeFirst() error

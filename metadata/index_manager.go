@@ -3,7 +3,7 @@ package metadata
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 )
 
@@ -49,7 +49,7 @@ func NewIndexManager(isNew bool, tableManager *TableManager, statManager *StatMa
 // CreateIndex creates a new index of the specified type for the specified field.
 // A unique ID is assigned to this index, and its information is stored in the indexCatalogTable.
 func (im *IndexManager) CreateIndex(indexName, tableName, fieldName string, transaction *tx.Transaction) error {
-	tableScan, err := tablescan.NewTableScan(transaction, indexCatalogTable, im.layout)
+	tableScan, err := table.NewTableScan(transaction, indexCatalogTable, im.layout)
 	if err != nil {
 		return fmt.Errorf("failed to create table scan: %w", err)
 	}
@@ -76,7 +76,7 @@ func (im *IndexManager) CreateIndex(indexName, tableName, fieldName string, tran
 
 // GetIndexInfo returns a map containing the index info for all indexes on the specified table.
 func (im *IndexManager) GetIndexInfo(tableName string, transaction *tx.Transaction) (map[string]*IndexInfo, error) {
-	tableScan, err := tablescan.NewTableScan(transaction, indexCatalogTable, im.layout)
+	tableScan, err := table.NewTableScan(transaction, indexCatalogTable, im.layout)
 	if err != nil {
 		return nil, err
 	}

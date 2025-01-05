@@ -8,7 +8,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 
 	"github.com/stretchr/testify/assert"
@@ -55,7 +55,7 @@ func TestTableManager_CreateTable(t *testing.T) {
 	require.NoError(t, err)
 
 	// Verify the table catalog contains `table_catalog`, `field_catalog`, and `test_table`
-	ts, err := tablescan.NewTableScan(txn, "table_catalog", tm.TableCatalogLayout())
+	ts, err := table.NewTableScan(txn, "table_catalog", tm.TableCatalogLayout())
 	require.NoError(t, err)
 	defer ts.Close()
 
@@ -81,7 +81,7 @@ func TestTableManager_CreateTable(t *testing.T) {
 	assert.Empty(t, tableEntries, "Unexpected entries in table_catalog")
 
 	// Verify the field catalog contains metadata for `test_table` and system catalogs
-	ts, err = tablescan.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
+	ts, err = table.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
 	require.NoError(t, err)
 	defer ts.Close()
 
@@ -130,7 +130,7 @@ func TestTableManager_CreateMultipleTables(t *testing.T) {
 	err = tm.CreateTable("orders", orderSchema, txn)
 	require.NoError(t, err)
 
-	ts, err := tablescan.NewTableScan(txn, "table_catalog", tm.TableCatalogLayout())
+	ts, err := table.NewTableScan(txn, "table_catalog", tm.TableCatalogLayout())
 	require.NoError(t, err)
 	defer ts.Close()
 
@@ -174,7 +174,7 @@ func TestTableManager_GetLayout(t *testing.T) {
 
 	// Validate that slot size is correctly retrieved
 	expectedSlotSize := layout.SlotSize()
-	tableCatalogScan, err := tablescan.NewTableScan(txn, tableCatalogTable, tm.TableCatalogLayout())
+	tableCatalogScan, err := table.NewTableScan(txn, tableCatalogTable, tm.TableCatalogLayout())
 	require.NoError(t, err)
 	defer tableCatalogScan.Close()
 
@@ -202,7 +202,7 @@ func TestTableManager_GetLayout(t *testing.T) {
 	assert.True(t, foundTable, "Table not found in table_catalog")
 
 	// Validate schema metadata in field catalog
-	fieldCatalogScan, err := tablescan.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
+	fieldCatalogScan, err := table.NewTableScan(txn, "field_catalog", tm.FieldCatalogLayout())
 	require.NoError(t, err)
 	defer fieldCatalogScan.Close()
 

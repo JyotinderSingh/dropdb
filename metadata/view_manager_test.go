@@ -3,7 +3,7 @@ package metadata
 import (
 	"testing"
 
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -30,7 +30,7 @@ func TestViewManager_CreateView(t *testing.T) {
 	layout, err := vm.tableManager.GetLayout(viewCatalogTable, txn)
 	require.NoError(t, err)
 
-	viewCatalogScan, err := tablescan.NewTableScan(txn, viewCatalogTable, layout)
+	viewCatalogScan, err := table.NewTableScan(txn, viewCatalogTable, layout)
 	require.NoError(t, err)
 	defer viewCatalogScan.Close()
 

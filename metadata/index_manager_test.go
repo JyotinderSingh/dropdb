@@ -1,7 +1,7 @@
 package metadata
 
 import (
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"testing"
 
 	"github.com/JyotinderSingh/dropdb/record"
@@ -38,7 +38,7 @@ func TestIndexManager_CreateIndex(t *testing.T) {
 
 	// Verify index metadata in index_catalog
 	indexCatalogLayout := indexManager.layout
-	ts, err := tablescan.NewTableScan(txn, indexCatalogTable, indexCatalogLayout)
+	ts, err := table.NewTableScan(txn, indexCatalogTable, indexCatalogLayout)
 	require.NoError(t, err)
 	defer ts.Close()
 

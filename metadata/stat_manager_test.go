@@ -4,7 +4,7 @@ import (
 	"testing"
 
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
@@ -32,7 +32,7 @@ func TestStatMgr_GetStatInfo(t *testing.T) {
 	// Insert some data
 	layout, err := tableManager.GetLayout("test_table", txn)
 	require.NoError(t, err)
-	ts, err := tablescan.NewTableScan(txn, "test_table", layout)
+	ts, err := table.NewTableScan(txn, "test_table", layout)
 	require.NoError(t, err)
 	defer ts.Close()
 
@@ -67,7 +67,7 @@ func TestStatMgr_RefreshStatistics(t *testing.T) {
 	// Insert some data
 	layout, err := tableManager.GetLayout("test_table", txn)
 	require.NoError(t, err)
-	ts, err := tablescan.NewTableScan(txn, "test_table", layout)
+	ts, err := table.NewTableScan(txn, "test_table", layout)
 	require.NoError(t, err)
 	defer ts.Close()
 

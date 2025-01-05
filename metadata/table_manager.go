@@ -3,7 +3,7 @@ package metadata
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/record"
-	"github.com/JyotinderSingh/dropdb/tablescan"
+	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
 )
 
@@ -78,7 +78,7 @@ func (tm *TableManager) CreateTable(tableName string, schema *record.Schema, tx 
 
 // insertIntoTableCatalog inserts a new record into the table catalog.
 func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName string, layout *record.Layout) error {
-	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
+	tableCatalog, err := table.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -98,7 +98,7 @@ func (tm *TableManager) insertIntoTableCatalog(tx *tx.Transaction, tableName str
 
 // insertIntoFieldCatalog inserts schema fields into the field catalog.
 func (tm *TableManager) insertIntoFieldCatalog(tx *tx.Transaction, tableName string, schema *record.Schema, layout *record.Layout) error {
-	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
+	fieldCatalog, err := table.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
 	if err != nil {
 		return err
 	}
@@ -141,7 +141,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	size := -1
 
 	// Read the slot size from the table catalog
-	tableCatalog, err := tablescan.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
+	tableCatalog, err := table.NewTableScan(tx, tableCatalogTable, tm.tableCatalogLayout)
 	if err != nil {
 		return nil, err
 	}
@@ -175,7 +175,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 	offsets := make(map[string]int)
 
 	// Read the fields from the field catalog
-	fieldCatalog, err := tablescan.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
+	fieldCatalog, err := table.NewTableScan(tx, fieldCatalogTable, tm.fieldCatalogLayout)
 	if err != nil {
 		return nil, err
 	}

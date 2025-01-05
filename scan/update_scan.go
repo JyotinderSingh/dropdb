@@ -1,4 +1,4 @@
-package query
+package scan
 
 import (
 	"github.com/JyotinderSingh/dropdb/record"
