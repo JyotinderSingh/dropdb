@@ -46,7 +46,7 @@ DropDB is built incrementally, with the following features implemented or planne
   Maintains statistics about the database for query planning, such as read costs, distinct records, and more.
 - **Flexible Query Expression Support**  
   Supports a wide range of query expressions among different data types, including:
-    - `=`, `>`, `<`, `>=`, `<=`.
+    - `=`, `!=`, `>`, `<`, `>=`, `<=`.
 
 ## Project Motivation
 This project serves as a hands-on journey to deeply understand the principles of database design and implementation. By replicating the structure outlined in Sciore's book, DropDB allows for experimentation and learning about real-world database challenges and solutions.
