@@ -1,5 +1,7 @@
 package query
 
+import "fmt"
+
 // Operator is the type of Operator used in a term.
 type Operator int
 
@@ -35,5 +37,25 @@ func (op Operator) String() string {
 		return ">="
 	default:
 		return ""
+	}
+}
+
+// OperatorFromString returns the Operator from the given string.
+func OperatorFromString(op string) (Operator, error) {
+	switch op {
+	case "=":
+		return EQ, nil
+	case "<>", "!=":
+		return NE, nil
+	case "<":
+		return LT, nil
+	case "<=":
+		return LE, nil
+	case ">":
+		return GT, nil
+	case ">=":
+		return GE, nil
+	default:
+		return -1, fmt.Errorf("invalid operator: %s", op)
 	}
 }

@@ -80,7 +80,7 @@ func (l *Lexer) MatchStringConstant() bool {
 
 // MatchKeyword returns true if the current token is the specified keyword.
 func (l *Lexer) MatchKeyword(w string) bool {
-	return (l.currentToken.Type == TTWord && l.currentToken.StringVal == strings.ToLower(w))
+	return l.currentToken.Type == TTWord && l.currentToken.StringVal == strings.ToLower(w)
 }
 
 // MatchId returns true if the current token is a legal identifier (non-keyword).
@@ -246,6 +246,8 @@ func (l *Lexer) nextToken() error {
 			return nil
 		} else {
 			// Fall back to number parsing
+			// strip any whitespace
+			tokenStr = strings.ReplaceAll(tokenStr, " ", "")
 			if n, err := strconv.Atoi(tokenStr); err == nil {
 				l.currentToken = Token{Type: TTNumber, NumVal: n}
 				return nil

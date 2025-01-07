@@ -20,8 +20,8 @@ func NewPredicateFromTerm(term *Term) *Predicate {
 	return &Predicate{terms: []*Term{term}}
 }
 
-// CojoinWith modifies the predicate to be the conjunction of itself and the specified predicate.
-func (p *Predicate) CojoinWith(other *Predicate) {
+// ConjoinWith modifies the predicate to be the conjunction of itself and the specified predicate.
+func (p *Predicate) ConjoinWith(other *Predicate) {
 	p.terms = append(p.terms, other.terms...)
 }
 

@@ -468,7 +468,7 @@ func TestSelectScan_MultipleTerms(t *testing.T) {
 
 	// We combine them into a single predicate: (val > 10) AND (val < 40).
 	pred := NewPredicateFromTerm(term1)
-	pred.CojoinWith(NewPredicateFromTerm(term2))
+	pred.ConjoinWith(NewPredicateFromTerm(term2))
 
 	ss, err := NewSelectScan(ts, pred)
 	require.NoError(t, err)
