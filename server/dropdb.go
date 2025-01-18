@@ -60,7 +60,9 @@ func NewDropDB(dirName string) (*DropDB, error) {
 		}
 	}
 
-	db.metadataManager = metadata.NewManager(isNew, transaction)
+	if db.metadataManager, err = metadata.NewManager(isNew, transaction); err != nil {
+		return nil, err
+	}
 
 	// TODO: Initialize QueryPlanner, UpdatePlanner, and Planner here.
 	err = transaction.Commit()

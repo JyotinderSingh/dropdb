@@ -6,6 +6,7 @@ import "fmt"
 type Operator int
 
 const (
+	NONE Operator = -1
 	// EQ is the equal Operator.
 	EQ Operator = iota
 	// NE is the not equal Operator.

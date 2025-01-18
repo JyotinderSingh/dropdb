@@ -12,24 +12,24 @@ type Manager struct {
 	indexManager *IndexManager
 }
 
-func NewManager(isNew bool, transaction *tx.Transaction) *Manager {
+func NewManager(isNew bool, transaction *tx.Transaction) (*Manager, error) {
 	m := &Manager{}
 
 	var err error
 	if m.tableManager, err = NewTableManager(isNew, transaction); err != nil {
-		return nil
+		return nil, err
 	}
 	if m.viewManager, err = NewViewManager(isNew, m.tableManager, transaction); err != nil {
-		return nil
+		return nil, err
 	}
-	if m.statManager, err = NewStatManager(m.tableManager, transaction, 100); err != nil {
-		return nil
+	if m.statManager, err = NewStatManager(m.tableManager, transaction, 0); err != nil {
+		return nil, err
 	}
 	if m.indexManager, err = NewIndexManager(isNew, m.tableManager, m.statManager, transaction); err != nil {
-		return nil
+		return nil, err
 	}
 
-	return m
+	return m, nil
 }
 
 // CreateTable creates a new table having the specified name and schema.

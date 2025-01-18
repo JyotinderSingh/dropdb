@@ -231,12 +231,18 @@ func reductionForConstantComparison(distinctValues int, op Operator) int {
 		return max(1, distinctValues)
 	case NE:
 		// Assumes non-equality doesn't significantly reduce distinct values.
-		return distinctValues
+		if distinctValues <= 1 {
+			return 1
+		} else {
+			// approximate: the portion we keep is (distinctValues-1)/distinctValues,
+			// so the factor = 1 / that portion = distinctValues/(distinctValues-1)
+			return distinctValues / (distinctValues - 1)
+		}
 	case LT, LE, GT, GE:
 		// Assume uniform distribution; halve the distinct values for range operators.
-		return max(1, distinctValues/2)
+		return 2
 	default:
-		return distinctValues // Default for unsupported operators
+		return 1 // Default for unsupported operators, assume no reduction.
 	}
 }
 
@@ -254,6 +260,24 @@ func (t *Term) EquatesWithConstant(fieldName string) any {
 		return t.lhs.asConstant()
 	}
 	return nil
+}
+
+// ComparesWithConstant determines if this term is of the form "F1 < 100"
+func (t *Term) ComparesWithConstant(fieldName string) (Operator, any) {
+	// Check if this Term involves the given fieldName on one side
+	// and a *constant* on the other side, e.g. "F1 < 100".
+	// If so, return (operator, constant).
+	// If not, return (NONE, nil).
+
+	// LHS is the field, RHS is a constant
+	if t.lhs.IsFieldName() && t.lhs.asFieldName() == fieldName && !t.rhs.IsFieldName() {
+		return t.op, t.rhs.asConstant()
+	}
+	// RHS is the field, LHS is a constant
+	if t.rhs.IsFieldName() && t.rhs.asFieldName() == fieldName && !t.lhs.IsFieldName() {
+		return t.op, t.lhs.asConstant()
+	}
+	return NONE, nil
 }
 
 // EquatesWithField determines if this term is of the form "F1=F2"

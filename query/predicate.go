@@ -97,6 +97,16 @@ func (p *Predicate) EquatesWithConstant(fieldName string) any {
 	return nil
 }
 
+// ComparesWithConstant determines if there is a term of the form "F1>c"
+func (p *Predicate) ComparesWithConstant(fieldName string) (Operator, any) {
+	for _, term := range p.terms {
+		if op, c := term.ComparesWithConstant(fieldName); op != NONE {
+			return op, c
+		}
+	}
+	return NONE, nil
+}
+
 // EquatesWithField determines if there is a term of the form "F1=F2"
 // where F1 is the specified field and F2 is another field.
 // If so, the name of the other field is returned; otherwise, an empty string is returned.
