@@ -23,7 +23,7 @@ DropDB is built incrementally, with the following features implemented or planne
   - Execution of SQL-like queries with optimized operators.
 - [x] Query Parsing  
   - Translation of user queries into executable plans.
-- [ ] Planning  
+- [x] Planning  
   - Logical and physical plan generation for efficient execution.
 - [ ] JDBC Interfaces  
   - Standardized interfaces to interact with the database from Java-based applications.
