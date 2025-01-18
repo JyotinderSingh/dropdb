@@ -48,6 +48,26 @@ DropDB is built incrementally, with the following features implemented or planne
   Supports a wide range of query expressions among different data types, including:
     - `=`, `!=`, `>`, `<`, `>=`, `<=`.
 
+## Currently Supported Commands
+DropDB currently recognizes and executes the following statements:
+
+### `SELECT`
+* Basic projections (`SELECT field1, field2, ...`)
+* From one or more tables (using cross-products internally)
+* With `WHERE` clauses to filter results
+### `CREATE TABLE`
+* Defines a new table with specified fields and data types, e.g. `CREATE TABLE users (id INT, name VARCHAR(20))`
+### `INSERT`
+* Inserts a single row into an existing table, e.g. `INSERT INTO users (id, name) VALUES (1, 'Alice')`
+### `UPDATE`
+* Modifies one or more rows in an existing table, e.g. `UPDATE users SET age = 60 WHERE age >= 30`
+### `DELETE`
+* Removes rows from an existing table based on a predicate, e.g. `DELETE FROM users WHERE age < 18`
+### `CREATE VIEW`
+* Defines a named view (stored query), e.g. `CREATE VIEW active_users AS SELECT * FROM users WHERE is_active = true`
+### `CREATE INDEX`
+* Creates an index on a given field to improve lookup performance, e.g. `CREATE INDEX idx_users_id ON users (id)`
+
 ## Project Motivation
 This project serves as a hands-on journey to deeply understand the principles of database design and implementation. By replicating the structure outlined in Sciore's book, DropDB allows for experimentation and learning about real-world database challenges and solutions.
 
