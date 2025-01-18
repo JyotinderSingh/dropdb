@@ -21,7 +21,7 @@ DropDB is built incrementally, with the following features implemented or planne
   - Systems to manage schema, table definitions, and data organization.
 - [x] Query Processing  
   - Execution of SQL-like queries with optimized operators.
-- [ ] Query Parsing  
+- [x] Query Parsing  
   - Translation of user queries into executable plans.
 - [ ] Planning  
   - Logical and physical plan generation for efficient execution.
