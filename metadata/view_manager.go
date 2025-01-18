@@ -1,7 +1,6 @@
 package metadata
 
 import (
-	"fmt"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
@@ -56,7 +55,7 @@ func (vm *ViewManager) CreateView(viewName, viewDefinition string, tx *tx.Transa
 	return viewCatalogTableScan.SetString(viewDefinitionField, viewDefinition)
 }
 
-// GetViewDefinition returns the definition of the specified view.
+// GetViewDefinition returns the definition of the specified view. Returns an empty string if the view does not exist.
 func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (string, error) {
 	layout, err := vm.tableManager.GetLayout(viewCatalogTable, tx)
 	if err != nil {
@@ -93,5 +92,5 @@ func (vm *ViewManager) GetViewDefinition(viewName string, tx *tx.Transaction) (s
 		}
 	}
 
-	return "", fmt.Errorf("view not found: %s", viewName)
+	return "", nil
 }

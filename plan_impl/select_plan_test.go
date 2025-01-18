@@ -17,7 +17,7 @@ func TestSelectPlan_BasicEquality(t *testing.T) {
 	defer cleanup()
 
 	// 2) Create table and insert test data
-	mdm := createTableWithSchema(t, txn, "users", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "users", map[string]interface{}{
 		"id":     0,
 		"name":   "string",
 		"active": true,
@@ -95,7 +95,7 @@ func TestSelectPlan_Range(t *testing.T) {
 	txn, cleanup := setupTestEnvironment(t, 800, 8)
 	defer cleanup()
 
-	mdm := createTableWithSchema(t, txn, "nums", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "nums", map[string]interface{}{
 		"id": 0,
 	})
 
@@ -166,7 +166,7 @@ func TestSelectPlan_MultipleConditions(t *testing.T) {
 	txn, cleanup := setupTestEnvironment(t, 800, 8)
 	defer cleanup()
 
-	mdm := createTableWithSchema(t, txn, "people", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "people", map[string]interface{}{
 		"id":     0,
 		"name":   "string",
 		"active": true,

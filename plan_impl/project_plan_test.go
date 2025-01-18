@@ -15,7 +15,7 @@ func TestProjectPlan_Basic(t *testing.T) {
 	defer cleanup()
 
 	// 2) Create table "users" with three fields
-	mdm := createTableWithSchema(t, txn, "users", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "users", map[string]interface{}{
 		"id":     0,
 		"name":   "string",
 		"active": true,

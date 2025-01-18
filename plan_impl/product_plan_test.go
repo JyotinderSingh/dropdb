@@ -17,13 +17,13 @@ func TestProductPlan_Basic(t *testing.T) {
 	// 2) Create two tables, "departments" and "employees"
 
 	// Table "departments": fields -> (dept_id INT, dept_name STRING)
-	mdm := createTableWithSchema(t, txn, "departments", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "departments", map[string]interface{}{
 		"dept_id":   0,
 		"dept_name": "string",
 	})
 
 	// Table "employees": fields -> (emp_id INT, emp_name STRING, dept_id INT)
-	createTableWithSchema(t, txn, "employees", map[string]interface{}{
+	createTableMetadataWithSchema(t, txn, "employees", map[string]interface{}{
 		"emp_id":   0,
 		"emp_name": "string",
 		"dept_id":  0,

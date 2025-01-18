@@ -38,7 +38,7 @@ func setupTestEnvironment(t *testing.T, blockSize, numBuffers int) (*tx.Transact
 	return txn, cleanup
 }
 
-func createTableWithSchema(t *testing.T, txn *tx.Transaction, tableName string, schemaFields map[string]interface{}) *metadata.Manager {
+func createTableMetadataWithSchema(t *testing.T, txn *tx.Transaction, tableName string, schemaFields map[string]interface{}) *metadata.Manager {
 	mdm, err := metadata.NewManager(true, txn)
 	require.NoError(t, err)
 
@@ -83,7 +83,7 @@ func TestTablePlan_Basic(t *testing.T) {
 	txn, cleanup := setupTestEnvironment(t, 800, 8)
 	defer cleanup()
 
-	mdm := createTableWithSchema(t, txn, "users", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "users", map[string]interface{}{
 		"id":     0,
 		"name":   "string",
 		"active": true,
@@ -136,7 +136,7 @@ func TestTablePlan_MultiBlock(t *testing.T) {
 	txn, cleanup := setupTestEnvironment(t, 800, 8)
 	defer cleanup()
 
-	mdm := createTableWithSchema(t, txn, "bigTable", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "bigTable", map[string]interface{}{
 		"num": 0,
 		"str": "string",
 	})
@@ -184,7 +184,7 @@ func TestTablePlan_StatsAndSchema(t *testing.T) {
 	txn, cleanup := setupTestEnvironment(t, 800, 8)
 	defer cleanup()
 
-	mdm := createTableWithSchema(t, txn, "statsTest", map[string]interface{}{
+	mdm := createTableMetadataWithSchema(t, txn, "statsTest", map[string]interface{}{
 		"id":   0,
 		"name": "string",
 	})
