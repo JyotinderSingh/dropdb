@@ -1,4 +1,4 @@
-# DropDB
+<img src="dropdb.png" alt="DropDB logo" width="200">
 
 ## Overview
 **DropDB** is a simple yet powerful database written in **Go**, designed as a personal learning project inspired by Edward Sciore's book, [Database Design and Implementation](https://link.springer.com/book/10.1007/978-3-030-33836-7). This project provides a practical approach to understanding core database concepts by building them from scratch.
