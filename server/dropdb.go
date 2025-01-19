@@ -6,6 +6,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/metadata"
+	"github.com/JyotinderSingh/dropdb/plan_impl"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
 )
@@ -22,6 +23,9 @@ type DropDB struct {
 	logManager      *log.Manager
 	metadataManager *metadata.Manager
 	lockTable       *concurrency.LockTable
+	queryPlanner    plan_impl.QueryPlanner
+	updatePlanner   plan_impl.UpdatePlanner
+	planner         *plan_impl.Planner
 }
 
 // NewDropDBWithOptions is a constructor that is mostly useful for debugging purposes.
@@ -64,7 +68,10 @@ func NewDropDB(dirName string) (*DropDB, error) {
 		return nil, err
 	}
 
-	// TODO: Initialize QueryPlanner, UpdatePlanner, and Planner here.
+	db.queryPlanner = plan_impl.NewBasicQueryPlanner(db.metadataManager)
+	db.updatePlanner = plan_impl.NewBasicUpdatePlanner(db.metadataManager)
+	db.planner = plan_impl.NewPlanner(db.queryPlanner, db.updatePlanner)
+
 	err = transaction.Commit()
 	return db, err
 }
@@ -75,6 +82,10 @@ func (db *DropDB) NewTx() *tx.Transaction {
 
 func (db *DropDB) MetadataManager() *metadata.Manager {
 	return db.metadataManager
+}
+
+func (db *DropDB) Planner() *plan_impl.Planner {
+	return db.planner
 }
 
 func (db *DropDB) FileManager() *file.Manager {
