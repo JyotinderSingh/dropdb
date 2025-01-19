@@ -6,7 +6,7 @@ import (
 	"log"
 	"os"
 
-	_ "github.com/JyotinderSingh/dropdb/dropdbdriver" // Import the driver for side effects
+	_ "github.com/JyotinderSingh/dropdb/driver" // Import the driver for side effects
 )
 
 func main() {

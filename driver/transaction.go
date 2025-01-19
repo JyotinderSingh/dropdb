@@ -1,4 +1,4 @@
-package dropdbdriver
+package driver
 
 import "github.com/JyotinderSingh/dropdb/tx"
 
