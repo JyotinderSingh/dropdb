@@ -171,6 +171,10 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 		}
 	}
 
+	if size < 0 {
+		return nil, fmt.Errorf("table %s not found", tableName)
+	}
+
 	schema := record.NewSchema()
 	offsets := make(map[string]int)
 

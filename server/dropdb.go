@@ -12,8 +12,8 @@ import (
 )
 
 const (
-	blockSize  = 400
-	bufferSize = 8
+	blockSize  = 800
+	bufferSize = 64
 	logFile    = "dropdb.log"
 )
 
