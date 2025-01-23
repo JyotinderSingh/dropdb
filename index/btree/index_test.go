@@ -26,7 +26,7 @@ func setupBTreeIndexTest(t *testing.T) (index.Index, func()) {
 	lm, err := log.NewManager(fm, "logfile")
 	require.NoError(t, err)
 
-	bm := buffer.NewManager(fm, lm, 100000)
+	bm := buffer.NewManager(fm, lm, 256)
 
 	transaction := tx.NewTransaction(fm, lm, bm, concurrency.NewLockTable())
 
