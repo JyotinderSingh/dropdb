@@ -62,9 +62,9 @@ func createTableMetadataWithSchema(t *testing.T, txn *tx.Transaction, tableName 
 }
 
 func insertRecords(t *testing.T, scan scan.UpdateScan, records []map[string]interface{}) {
-	for _, record := range records {
+	for _, rec := range records {
 		require.NoError(t, scan.Insert())
-		for field, value := range record {
+		for field, value := range rec {
 			switch v := value.(type) {
 			case int:
 				require.NoError(t, scan.SetInt(field, v))
