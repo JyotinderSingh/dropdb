@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type SetStringRecord struct {
@@ -18,10 +18,10 @@ type SetStringRecord struct {
 // NewSetStringRecord creates a new SetStringRecord from a Page.
 func NewSetStringRecord(page *file.Page) (*SetStringRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := page.GetInt(txNumPos)
 
-	fileNamePos := txNumPos + utils.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName, err := page.GetString(fileNamePos)
 	if err != nil {
 		return nil, err
@@ -31,10 +31,10 @@ func NewSetStringRecord(page *file.Page) (*SetStringRecord, error) {
 	blockNum := page.GetInt(blockNumPos)
 	block := &file.BlockId{File: fileName, BlockNumber: int(blockNum)}
 
-	offsetPos := blockNumPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
 	offset := page.GetInt(offsetPos)
 
-	valuePos := offsetPos + utils.IntSize
+	valuePos := offsetPos + types.IntSize
 	value, err := page.GetString(valuePos)
 	if err != nil {
 		return nil, err
@@ -75,15 +75,15 @@ func (r *SetStringRecord) Undo(tx *Transaction) error {
 // The method returns the LSN of the new log record.
 func WriteSetStringToLog(logManager *log.Manager, txNum int, block *file.BlockId, offset int, value string) (int, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
-	fileNamePos := txNumPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName := block.Filename()
 
 	blockNumPos := fileNamePos + file.MaxLength(len(fileName))
 	blockNum := block.Number()
 
-	offsetPos := blockNumPos + utils.IntSize
-	valuePos := offsetPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
+	valuePos := offsetPos + types.IntSize
 	recordLen := valuePos + file.MaxLength(len(value))
 
 	recordBytes := make([]byte, recordLen)

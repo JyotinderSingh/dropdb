@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type SetBoolRecord struct {
@@ -17,10 +17,10 @@ type SetBoolRecord struct {
 
 func NewSetBoolRecord(page *file.Page) (*SetBoolRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := page.GetInt(txNumPos)
 
-	fileNamePos := txNumPos + utils.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName, err := page.GetString(fileNamePos)
 	if err != nil {
 		return nil, err
@@ -30,10 +30,10 @@ func NewSetBoolRecord(page *file.Page) (*SetBoolRecord, error) {
 	blockNum := page.GetInt(blockNumPos)
 	block := &file.BlockId{File: fileName, BlockNumber: int(blockNum)}
 
-	offsetPos := blockNumPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
 	offset := page.GetInt(offsetPos)
 
-	valuePos := offsetPos + utils.IntSize
+	valuePos := offsetPos + types.IntSize
 	val := page.GetBool(valuePos)
 
 	return &SetBoolRecord{txNum: txNum, offset: offset, value: val, block: block}, nil
@@ -61,15 +61,15 @@ func (r *SetBoolRecord) Undo(tx *Transaction) error {
 
 func WriteSetBoolToLog(logManager *log.Manager, txNum int, block *file.BlockId, offset int, val bool) (int, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
-	fileNamePos := txNumPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName := block.Filename()
 
 	blockNumPos := fileNamePos + file.MaxLength(len(fileName))
 	blockNum := block.Number()
 
-	offsetPos := blockNumPos + utils.IntSize
-	valuePos := offsetPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
+	valuePos := offsetPos + types.IntSize
 
 	// 1 byte for bool
 	recordLen := valuePos + 1

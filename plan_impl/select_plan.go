@@ -5,6 +5,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/query"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/scan"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 var _ plan.Plan = &SelectPlan{}
@@ -65,12 +66,12 @@ func (sp *SelectPlan) DistinctValues(fieldName string) int {
 	// 3) Check for range comparisons (fieldName < c, > c, <= c, >= c, <> c, etc.)
 	op, _ := sp.predicate.ComparesWithConstant(fieldName)
 	switch op {
-	case query.LT, query.LE, query.GT, query.GE:
+	case types.LT, types.LE, types.GT, types.GE:
 		// A naive heuristic: cut the number of distinct values in half
 		// because we're restricting to a range.
 		return max(1, sp.inputPlan.DistinctValues(fieldName)/2)
 
-	case query.NE:
+	case types.NE:
 		// “not equal” typically leaves most of the domain, but at least
 		// it excludes 1 distinct value if we know which constant is being excluded.
 		distinct := sp.inputPlan.DistinctValues(fieldName)

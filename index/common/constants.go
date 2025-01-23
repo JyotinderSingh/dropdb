@@ -1,4 +1,4 @@
-package index
+package common
 
 const (
 	BlockField     = "block"

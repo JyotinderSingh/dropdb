@@ -3,6 +3,7 @@ package hash
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/index"
+	"github.com/JyotinderSingh/dropdb/index/common"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
@@ -17,7 +18,6 @@ const (
 var _ index.Index = (*Index)(nil)
 
 type Index struct {
-	index.Index
 	transaction *tx.Transaction
 	indexName   string
 	layout      *record.Layout
@@ -26,7 +26,7 @@ type Index struct {
 }
 
 // NewIndex opens a hash index for the specified index.
-func NewIndex(transaction *tx.Transaction, indexName string, layout *record.Layout) *Index {
+func NewIndex(transaction *tx.Transaction, indexName string, layout *record.Layout) index.Index {
 	return &Index{
 		transaction: transaction,
 		indexName:   indexName,
@@ -63,7 +63,7 @@ func (idx *Index) Next() (bool, error) {
 			return false, err
 		}
 
-		currentValue, err := idx.tableScan.GetVal(index.DataValueField)
+		currentValue, err := idx.tableScan.GetVal(common.DataValueField)
 		if err != nil {
 			return false, err
 		}
@@ -75,11 +75,11 @@ func (idx *Index) Next() (bool, error) {
 
 // GetDataRecordID retrieves the data record ID from the current record in the table scan for the bucket.
 func (idx *Index) GetDataRecordID() (*record.ID, error) {
-	blockNumber, err := idx.tableScan.GetInt(index.BlockField)
+	blockNumber, err := idx.tableScan.GetInt(common.BlockField)
 	if err != nil {
 		return nil, err
 	}
-	id, err := idx.tableScan.GetInt(index.IDField)
+	id, err := idx.tableScan.GetInt(common.IDField)
 	if err != nil {
 		return nil, err
 	}
@@ -96,13 +96,13 @@ func (idx *Index) Insert(dataValue any, dataRecordID *record.ID) error {
 	if err := idx.tableScan.Insert(); err != nil {
 		return err
 	}
-	if err := idx.tableScan.SetInt(index.BlockField, dataRecordID.BlockNumber()); err != nil {
+	if err := idx.tableScan.SetInt(common.BlockField, dataRecordID.BlockNumber()); err != nil {
 		return err
 	}
-	if err := idx.tableScan.SetInt(index.IDField, dataRecordID.Slot()); err != nil {
+	if err := idx.tableScan.SetInt(common.IDField, dataRecordID.Slot()); err != nil {
 		return err
 	}
-	return idx.tableScan.SetVal(index.DataValueField, dataValue)
+	return idx.tableScan.SetVal(common.DataValueField, dataValue)
 }
 
 // Delete deletes the specified record from the table scan for the bucket.

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/tx"
+	"github.com/JyotinderSingh/dropdb/types"
 	"time"
 )
 
@@ -133,17 +134,17 @@ func (p *Page) Format() error {
 			fieldPosition := p.offset(slot) + p.layout.Offset(fieldName)
 
 			switch schema.Type(fieldName) {
-			case Integer:
+			case types.Integer:
 				err = p.tx.SetInt(p.block, fieldPosition, 0, false)
-			case Long:
+			case types.Long:
 				err = p.tx.SetLong(p.block, fieldPosition, 0, false)
-			case Short:
+			case types.Short:
 				err = p.tx.SetShort(p.block, fieldPosition, 0, false)
-			case Boolean:
+			case types.Boolean:
 				err = p.tx.SetBool(p.block, fieldPosition, false, false)
-			case Date:
+			case types.Date:
 				err = p.tx.SetDate(p.block, fieldPosition, time.Time{}, false)
-			case Varchar:
+			case types.Varchar:
 				err = p.tx.SetString(p.block, fieldPosition, "", false)
 			}
 

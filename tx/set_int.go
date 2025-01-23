@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type SetIntRecord struct {
@@ -18,10 +18,10 @@ type SetIntRecord struct {
 // NewSetIntRecord creates a new SetIntRecord from a Page.
 func NewSetIntRecord(page *file.Page) (*SetIntRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := page.GetInt(txNumPos)
 
-	fileNamePos := txNumPos + utils.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName, err := page.GetString(fileNamePos)
 	if err != nil {
 		return nil, err
@@ -31,10 +31,10 @@ func NewSetIntRecord(page *file.Page) (*SetIntRecord, error) {
 	blockNum := page.GetInt(blockNumPos)
 	block := &file.BlockId{File: fileName, BlockNumber: int(blockNum)}
 
-	offsetPos := blockNumPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
 	offset := page.GetInt(offsetPos)
 
-	valuePos := offsetPos + utils.IntSize
+	valuePos := offsetPos + types.IntSize
 	value := page.GetInt(valuePos)
 
 	return &SetIntRecord{txNum: txNum, offset: offset, value: value, block: block}, nil
@@ -73,16 +73,16 @@ func (r *SetIntRecord) Undo(tx *Transaction) error {
 // The method returns the LSN of the new log record.
 func WriteSetIntToLog(logManager *log.Manager, txNum int, block *file.BlockId, offset, val int) (int, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
-	fileNamePos := txNumPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName := block.Filename()
 
 	blockNumPos := fileNamePos + file.MaxLength(len(block.File))
 	blockNum := block.Number()
 
-	offsetPos := blockNumPos + utils.IntSize
-	valuePos := offsetPos + utils.IntSize
-	recordLen := valuePos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
+	valuePos := offsetPos + types.IntSize
+	recordLen := valuePos + types.IntSize
 
 	recordBytes := make([]byte, recordLen)
 	page := file.NewPageFromBytes(recordBytes)

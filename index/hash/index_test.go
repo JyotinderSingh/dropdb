@@ -3,6 +3,8 @@ package hash
 import (
 	"github.com/JyotinderSingh/dropdb/buffer"
 	"github.com/JyotinderSingh/dropdb/file"
+	"github.com/JyotinderSingh/dropdb/index"
+	"github.com/JyotinderSingh/dropdb/index/common"
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
 	"os"
@@ -14,7 +16,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupHashIndexTest(t *testing.T) (*Index, *tx.Transaction, func()) {
+func setupHashIndexTest(t *testing.T) (index.Index, *tx.Transaction, func()) {
 
 	dbDir := t.TempDir()
 
@@ -29,9 +31,9 @@ func setupHashIndexTest(t *testing.T) (*Index, *tx.Transaction, func()) {
 	transaction := tx.NewTransaction(fm, lm, bm, concurrency.NewLockTable())
 
 	schema := record.NewSchema()
-	schema.AddIntField("block")
-	schema.AddIntField("id")
-	schema.AddStringField("data_value", 20)
+	schema.AddIntField(common.BlockField)
+	schema.AddIntField(common.IDField)
+	schema.AddStringField(common.DataValueField, 20)
 
 	layout := record.NewLayout(schema)
 	indexName := "test_index"
@@ -56,7 +58,7 @@ func TestHashIndex_BeforeFirst(t *testing.T) {
 
 	err := hashIndex.BeforeFirst("test_key")
 	require.NoError(t, err)
-	assert.True(t, hashIndex.tableScan != nil)
+	assert.True(t, hashIndex.(*Index).tableScan != nil)
 }
 
 func TestHashIndex_Next(t *testing.T) {
@@ -83,7 +85,7 @@ func TestHashIndex_Next(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, testRecord, dataRecordID)
 
-	currentValue, err := hashIndex.tableScan.GetString("data_value")
+	currentValue, err := hashIndex.(*Index).tableScan.GetString("data_value")
 	require.NoError(t, err)
 	assert.Equal(t, "test_key", currentValue)
 
@@ -134,7 +136,7 @@ func TestHashIndex_Insert(t *testing.T) {
 	require.NoError(t, err)
 	assert.Equal(t, dataRecordID, id)
 
-	currentValue, err := hashIndex.tableScan.GetString("data_value")
+	currentValue, err := hashIndex.(*Index).tableScan.GetString("data_value")
 	require.NoError(t, err)
 	assert.Equal(t, "test_key", currentValue)
 }
@@ -170,7 +172,7 @@ func TestHashIndex_Close(t *testing.T) {
 	hashIndex.Close()
 
 	// Verify that the table scan is closed
-	assert.Nil(t, hashIndex.tableScan)
+	assert.Nil(t, hashIndex.(*Index).tableScan)
 }
 
 func TestHashIndex_SearchCost(t *testing.T) {

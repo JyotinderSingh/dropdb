@@ -1,6 +1,8 @@
 package record
 
-import "github.com/JyotinderSingh/dropdb/utils"
+import (
+	"github.com/JyotinderSingh/dropdb/types"
+)
 
 // Data type alignments in bytes (platform-independent where possible)
 const (
@@ -12,19 +14,19 @@ const (
 )
 
 // alignmentRequirement returns the alignment size for a given field type.
-func alignmentRequirement(fieldType SchemaType) int {
+func alignmentRequirement(fieldType types.SchemaType) int {
 	switch fieldType {
-	case Integer:
-		return utils.IntSize
-	case Long:
+	case types.Integer:
+		return types.IntSize
+	case types.Long:
 		return LongAlignment
-	case Short:
+	case types.Short:
 		return ShortAlignment
-	case Boolean:
+	case types.Boolean:
 		return BooleanAlignment
-	case Date:
+	case types.Date:
 		return DateAlignment
-	case Varchar:
+	case types.Varchar:
 		return VarcharAlignment
 	default:
 		return 1 // Default to no alignment for unknown types

@@ -3,6 +3,7 @@ package parse
 import (
 	"github.com/JyotinderSingh/dropdb/query"
 	"github.com/JyotinderSingh/dropdb/record"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type Parser struct {
@@ -92,7 +93,7 @@ func (p *Parser) term() (*query.Term, error) {
 		return &query.Term{}, err
 	}
 
-	parsedOp, err := query.OperatorFromString(op)
+	parsedOp, err := types.OperatorFromString(op)
 	if err != nil {
 		return &query.Term{}, err
 	}

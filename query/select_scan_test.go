@@ -5,6 +5,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -137,7 +138,7 @@ func TestSelectScan_SomeMatches(t *testing.T) {
 	// We'll do something like: val >= 30
 	lhsExpr := NewFieldExpression("val")
 	rhsExpr := NewConstantExpression(30)
-	term := NewTerm(lhsExpr, rhsExpr, GE)
+	term := NewTerm(lhsExpr, rhsExpr, types.GE)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -169,7 +170,7 @@ func TestSelectScan_NoMatches(t *testing.T) {
 	// Build a predicate: name == "Zach" (none has name=Zach)
 	lhsExpr := NewFieldExpression("name")
 	rhsExpr := NewConstantExpression("Zach")
-	term := NewTerm(lhsExpr, rhsExpr, EQ)
+	term := NewTerm(lhsExpr, rhsExpr, types.EQ)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -198,7 +199,7 @@ func TestSelectScan_Update(t *testing.T) {
 	// We'll filter on, say, all rows with val < 30 (should be Alice(10), Bob(20)).
 	lhsExpr := NewFieldExpression("val")
 	rhsExpr := NewConstantExpression(30)
-	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, LT))
+	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, types.LT))
 
 	ss, err := NewSelectScan(ts, pred)
 	require.NoError(t, err)
@@ -262,7 +263,7 @@ func TestSelectScan_Delete(t *testing.T) {
 	// Build a predicate that selects rows with id < 3 (Alice=1, Bob=2)
 	lhsExpr := NewFieldExpression("id")
 	rhsExpr := NewConstantExpression(3)
-	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, LT))
+	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, types.LT))
 
 	ss, err := NewSelectScan(ts, pred)
 	require.NoError(t, err)
@@ -337,7 +338,7 @@ func TestSelectScan_RecordID(t *testing.T) {
 	// Carol is not included in that set. Then try MoveToRecordID on Carol.
 	lhsExpr := NewFieldExpression("id")
 	rhsExpr := NewConstantExpression(3)
-	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, LT))
+	pred := NewPredicateFromTerm(NewTerm(lhsExpr, rhsExpr, types.LT))
 
 	ss, err := NewSelectScan(ts, pred)
 	require.NoError(t, err)
@@ -366,7 +367,7 @@ func TestSelectScan_OperatorNE(t *testing.T) {
 
 	lhsExpr := NewFieldExpression("val")
 	rhsExpr := NewConstantExpression(20)
-	term := NewTerm(lhsExpr, rhsExpr, NE)
+	term := NewTerm(lhsExpr, rhsExpr, types.NE)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -399,7 +400,7 @@ func TestSelectScan_OperatorGT(t *testing.T) {
 
 	lhsExpr := NewFieldExpression("id")
 	rhsExpr := NewConstantExpression(2)
-	term := NewTerm(lhsExpr, rhsExpr, GT)
+	term := NewTerm(lhsExpr, rhsExpr, types.GT)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -431,7 +432,7 @@ func TestSelectScan_OperatorLE(t *testing.T) {
 
 	lhsExpr := NewFieldExpression("val")
 	rhsExpr := NewConstantExpression(20)
-	term := NewTerm(lhsExpr, rhsExpr, LE)
+	term := NewTerm(lhsExpr, rhsExpr, types.LE)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -462,9 +463,9 @@ func TestSelectScan_MultipleTerms(t *testing.T) {
 	defer cleanup()
 
 	// First term: val > 10
-	term1 := NewTerm(NewFieldExpression("val"), NewConstantExpression(10), GT)
+	term1 := NewTerm(NewFieldExpression("val"), NewConstantExpression(10), types.GT)
 	// Second term: val < 40
-	term2 := NewTerm(NewFieldExpression("val"), NewConstantExpression(40), LT)
+	term2 := NewTerm(NewFieldExpression("val"), NewConstantExpression(40), types.LT)
 
 	// We combine them into a single predicate: (val > 10) AND (val < 40).
 	pred := NewPredicateFromTerm(term1)
@@ -514,7 +515,7 @@ func TestSelectScan_FieldVsField(t *testing.T) {
 	// Left = "val" field, Right = "id" field
 	lhsExpr := NewFieldExpression("val")
 	rhsExpr := NewFieldExpression("id")
-	term := NewTerm(lhsExpr, rhsExpr, GT) // val > id
+	term := NewTerm(lhsExpr, rhsExpr, types.GT) // val > id
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)
@@ -540,7 +541,7 @@ func TestSelectScan_FieldVsField(t *testing.T) {
 	// Validate reverse predicate
 	lhsExpr = NewFieldExpression("id")
 	rhsExpr = NewFieldExpression("val")
-	term = NewTerm(lhsExpr, rhsExpr, GT) // id > val
+	term = NewTerm(lhsExpr, rhsExpr, types.GT) // id > val
 	pred = NewPredicateFromTerm(term)
 
 	ss, err = NewSelectScan(ts, pred)
@@ -573,7 +574,7 @@ func TestSelectScan_StringComparison(t *testing.T) {
 	// We'll do name < "Carol" → "Alice" < "Carol", "Bob" < "Carol", but "Carol" == "Carol", "Dave" > "Carol".
 	lhsExpr := NewFieldExpression("name")
 	rhsExpr := NewConstantExpression("Carol")
-	term := NewTerm(lhsExpr, rhsExpr, LT)
+	term := NewTerm(lhsExpr, rhsExpr, types.LT)
 	pred := NewPredicateFromTerm(term)
 
 	ss, err := NewSelectScan(ts, pred)

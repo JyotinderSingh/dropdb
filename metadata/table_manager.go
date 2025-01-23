@@ -5,6 +5,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/table"
 	"github.com/JyotinderSingh/dropdb/tx"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 const (
@@ -223,7 +224,7 @@ func (tm *TableManager) GetLayout(tableName string, tx *tx.Transaction) (*record
 			return nil, err
 		}
 
-		schema.AddField(fieldName, record.SchemaType(fieldType), fieldLength)
+		schema.AddField(fieldName, types.SchemaType(fieldType), fieldLength)
 		offsets[fieldName] = fieldOffset
 	}
 

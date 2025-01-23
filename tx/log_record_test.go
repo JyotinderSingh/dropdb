@@ -2,7 +2,7 @@ package tx
 
 import (
 	"fmt"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"os"
 	"path/filepath"
 	"testing"
@@ -46,11 +46,11 @@ func TestSetBoolRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetBool))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	page.SetBool(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue)
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	page.SetBool(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue)
 
 	// Test record creation
 	record, err := NewSetBoolRecord(page)
@@ -88,11 +88,11 @@ func TestSetDateRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetDate))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	page.SetDate(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue)
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	page.SetDate(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue)
 
 	// Test record creation
 	record, err := NewSetDateRecord(page)
@@ -132,11 +132,11 @@ func TestSetIntRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetInt))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	page.SetInt(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue)
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	page.SetInt(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue)
 
 	// Test record creation
 	record, err := NewSetIntRecord(page)
@@ -174,11 +174,11 @@ func TestSetLongRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetLong))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	page.SetLong(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue)
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	page.SetLong(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue)
 
 	// Test record creation
 	record, err := NewSetLongRecord(page)
@@ -216,11 +216,11 @@ func TestSetShortRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetShort))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	page.SetShort(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue)
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	page.SetShort(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue)
 
 	// Test record creation
 	record, err := NewSetShortRecord(page)
@@ -258,11 +258,11 @@ func TestSetStringRecord(t *testing.T) {
 
 	// Set page values
 	page.SetInt(0, int(SetString))
-	page.SetInt(utils.IntSize, txNum)
-	require.NoError(t, page.SetString(2*utils.IntSize, block.Filename()))
-	page.SetInt(2*utils.IntSize+file.MaxLength(len(block.Filename())), block.Number())
-	page.SetInt(3*utils.IntSize+file.MaxLength(len(block.Filename())), offset)
-	require.NoError(t, page.SetString(4*utils.IntSize+file.MaxLength(len(block.Filename())), oldValue))
+	page.SetInt(types.IntSize, txNum)
+	require.NoError(t, page.SetString(2*types.IntSize, block.Filename()))
+	page.SetInt(2*types.IntSize+file.MaxLength(len(block.Filename())), block.Number())
+	page.SetInt(3*types.IntSize+file.MaxLength(len(block.Filename())), offset)
+	require.NoError(t, page.SetString(4*types.IntSize+file.MaxLength(len(block.Filename())), oldValue))
 
 	// Test record creation
 	record, err := NewSetStringRecord(page)

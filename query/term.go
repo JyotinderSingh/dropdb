@@ -1,21 +1,20 @@
 package query
 
 import (
-	"fmt"
 	"github.com/JyotinderSingh/dropdb/plan"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/scan"
-	"time"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type Term struct {
 	lhs *Expression
 	rhs *Expression
-	op  Operator
+	op  types.Operator
 }
 
 // NewTerm creates a new term.
-func NewTerm(lhs, rhs *Expression, op Operator) *Term {
+func NewTerm(lhs, rhs *Expression, op types.Operator) *Term {
 	return &Term{lhs: lhs, rhs: rhs, op: op}
 }
 
@@ -31,153 +30,13 @@ func (t *Term) IsSatisfied(inputScan scan.Scan) bool {
 	}
 
 	switch t.op {
-	case EQ:
+	case types.EQ:
 		return lhsVal == rhsVal
-	case NE:
+	case types.NE:
 		return lhsVal != rhsVal
-	case LT, LE, GT, GE:
-		return compareSupportedTypes(lhsVal, rhsVal, t.op)
+	case types.LT, types.LE, types.GT, types.GE:
+		return types.CompareSupportedTypes(lhsVal, rhsVal, t.op)
 	default:
-		return false
-	}
-}
-
-// compareSupportedTypes handles comparison for supported types.
-func compareSupportedTypes(lhs, rhs any, op Operator) bool {
-	// Handle nil values explicitly
-	if lhs == nil || rhs == nil {
-		return false // Null comparisons always return false in SQL semantics
-	}
-
-	// Type-specific comparisons
-	switch lhs := lhs.(type) {
-	case int:
-		if rhs, ok := rhs.(int); ok {
-			return compareInts(lhs, rhs, op)
-		}
-	case int64:
-		if rhs, ok := rhs.(int64); ok {
-			return compareInt64s(lhs, rhs, op)
-		}
-	case int16:
-		if rhs, ok := rhs.(int16); ok {
-			return compareInt16s(lhs, rhs, op)
-		}
-	case string:
-		if rhs, ok := rhs.(string); ok {
-			return compareStrings(lhs, rhs, op)
-		}
-	case bool:
-		if rhs, ok := rhs.(bool); ok {
-			return compareBools(lhs, rhs, op)
-		}
-	case time.Time:
-		if rhs, ok := rhs.(time.Time); ok {
-			return compareTimes(lhs, rhs, op)
-		}
-	default:
-		// Log unsupported type for debugging
-		fmt.Printf("Unsupported type for comparison: lhs=%T, rhs=%T\n", lhs, rhs)
-	}
-
-	// Return false for unsupported or mismatched types
-	return false
-}
-
-// compareInts compares two integers.
-func compareInts(lhs, rhs int, op Operator) bool {
-	switch op {
-	case LT:
-		return lhs < rhs
-	case LE:
-		return lhs <= rhs
-	case GT:
-		return lhs > rhs
-	case GE:
-		return lhs >= rhs
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
-		return false
-	}
-}
-
-// compareInt64s compares two int64 values.
-func compareInt64s(lhs, rhs int64, op Operator) bool {
-	switch op {
-	case LT:
-		return lhs < rhs
-	case LE:
-		return lhs <= rhs
-	case GT:
-		return lhs > rhs
-	case GE:
-		return lhs >= rhs
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
-		return false
-	}
-}
-
-// compareInt16s compares two int16 values.
-func compareInt16s(lhs, rhs int16, op Operator) bool {
-	switch op {
-	case LT:
-		return lhs < rhs
-	case LE:
-		return lhs <= rhs
-	case GT:
-		return lhs > rhs
-	case GE:
-		return lhs >= rhs
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
-		return false
-	}
-}
-
-// compareStrings compares two strings.
-func compareStrings(lhs, rhs string, op Operator) bool {
-	switch op {
-	case LT:
-		return lhs < rhs
-	case LE:
-		return lhs <= rhs
-	case GT:
-		return lhs > rhs
-	case GE:
-		return lhs >= rhs
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
-		return false
-	}
-}
-
-// compareBools compares two booleans (only equality comparisons make sense).
-func compareBools(lhs, rhs bool, op Operator) bool {
-	switch op {
-	case EQ:
-		return lhs == rhs
-	case NE:
-		return lhs != rhs
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
-		return false // Invalid for comparison operators like <, >
-	}
-}
-
-// compareTimes compares two time.Time values.
-func compareTimes(lhs, rhs time.Time, op Operator) bool {
-	switch op {
-	case LT:
-		return lhs.Before(rhs)
-	case LE:
-		return lhs.Before(rhs) || lhs.Equal(rhs)
-	case GT:
-		return lhs.After(rhs)
-	case GE:
-		return lhs.After(rhs) || lhs.Equal(rhs)
-	default:
-		fmt.Printf("unsupported operator: %v\n", op)
 		return false
 	}
 }
@@ -213,10 +72,10 @@ func (t *Term) ReductionFactor(queryPlan plan.Plan) int {
 	rhsConst := t.rhs.asConstant()
 
 	// If constants are equal for EQ, perfect selectivity; otherwise, default.
-	if lhsConst == rhsConst && t.op == EQ {
+	if lhsConst == rhsConst && t.op == types.EQ {
 		return 1
 	}
-	if lhsConst != rhsConst && t.op == NE {
+	if lhsConst != rhsConst && t.op == types.NE {
 		return 1
 	}
 
@@ -225,11 +84,11 @@ func (t *Term) ReductionFactor(queryPlan plan.Plan) int {
 }
 
 // Helper to calculate reduction factor for constant comparisons using distinct values.
-func reductionForConstantComparison(distinctValues int, op Operator) int {
+func reductionForConstantComparison(distinctValues int, op types.Operator) int {
 	switch op {
-	case EQ:
+	case types.EQ:
 		return max(1, distinctValues)
-	case NE:
+	case types.NE:
 		// Assumes non-equality doesn't significantly reduce distinct values.
 		if distinctValues <= 1 {
 			return 1
@@ -238,7 +97,7 @@ func reductionForConstantComparison(distinctValues int, op Operator) int {
 			// so the factor = 1 / that portion = distinctValues/(distinctValues-1)
 			return distinctValues / (distinctValues - 1)
 		}
-	case LT, LE, GT, GE:
+	case types.LT, types.LE, types.GT, types.GE:
 		// Assume uniform distribution; halve the distinct values for range operators.
 		return 2
 	default:
@@ -251,7 +110,7 @@ func reductionForConstantComparison(distinctValues int, op Operator) int {
 // If so, the method returns that constant.
 // If not, the method returns nil.
 func (t *Term) EquatesWithConstant(fieldName string) any {
-	if t.op != EQ { // Explicit check for equality
+	if t.op != types.EQ { // Explicit check for equality
 		return nil
 	}
 	if t.lhs.IsFieldName() && t.lhs.asFieldName() == fieldName && !t.rhs.IsFieldName() {
@@ -263,7 +122,7 @@ func (t *Term) EquatesWithConstant(fieldName string) any {
 }
 
 // ComparesWithConstant determines if this term is of the form "F1 < 100"
-func (t *Term) ComparesWithConstant(fieldName string) (Operator, any) {
+func (t *Term) ComparesWithConstant(fieldName string) (types.Operator, any) {
 	// Check if this Term involves the given fieldName on one side
 	// and a *constant* on the other side, e.g. "F1 < 100".
 	// If so, return (operator, constant).
@@ -277,7 +136,7 @@ func (t *Term) ComparesWithConstant(fieldName string) (Operator, any) {
 	if t.rhs.IsFieldName() && t.rhs.asFieldName() == fieldName && !t.lhs.IsFieldName() {
 		return t.op, t.lhs.asConstant()
 	}
-	return NONE, nil
+	return types.NONE, nil
 }
 
 // EquatesWithField determines if this term is of the form "F1=F2"
@@ -285,7 +144,7 @@ func (t *Term) ComparesWithConstant(fieldName string) (Operator, any) {
 // If so, the method returns the name of the other field.
 // If not, the method returns an empty string.
 func (t *Term) EquatesWithField(fieldName string) string {
-	if t.op != EQ { // Explicit check for equality
+	if t.op != types.EQ { // Explicit check for equality
 		return ""
 	}
 	if t.lhs.IsFieldName() && t.lhs.asFieldName() == fieldName && t.rhs.IsFieldName() {

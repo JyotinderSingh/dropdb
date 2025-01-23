@@ -4,9 +4,9 @@ import (
 	"database/sql/driver"
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/plan"
-	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/scan"
 	"github.com/JyotinderSingh/dropdb/tx"
+	"github.com/JyotinderSingh/dropdb/types"
 	"io"
 )
 
@@ -77,32 +77,32 @@ func (r *DropDBRows) Next(dest []driver.Value) error {
 		// Convert from scan's type to driver.Value
 		var v interface{}
 		switch columnType {
-		case record.Integer:
+		case types.Integer:
 			v, err = r.scan.GetInt(col)
 			if err != nil {
 				return err
 			}
-		case record.Varchar:
+		case types.Varchar:
 			v, err = r.scan.GetString(col)
 			if err != nil {
 				return err
 			}
-		case record.Boolean:
+		case types.Boolean:
 			v, err = r.scan.GetBool(col)
 			if err != nil {
 				return err
 			}
-		case record.Long:
+		case types.Long:
 			v, err = r.scan.GetLong(col)
 			if err != nil {
 				return err
 			}
-		case record.Short:
+		case types.Short:
 			v, err = r.scan.GetShort(col)
 			if err != nil {
 				return err
 			}
-		case record.Date:
+		case types.Date:
 			v, err = r.scan.GetDate(col)
 			if err != nil {
 				return err

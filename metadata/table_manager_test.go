@@ -3,6 +3,7 @@ package metadata
 import (
 	"github.com/JyotinderSingh/dropdb/buffer"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
+	"github.com/JyotinderSingh/dropdb/types"
 	"testing"
 
 	"github.com/JyotinderSingh/dropdb/file"
@@ -210,12 +211,12 @@ func TestTableManager_GetLayout(t *testing.T) {
 	require.NoError(t, err)
 
 	expectedFields := map[string]struct {
-		fieldType record.SchemaType
+		fieldType types.SchemaType
 		length    int
 	}{
-		"id":     {record.Integer, 0},
-		"name":   {record.Varchar, 20},
-		"active": {record.Boolean, 0},
+		"id":     {types.Integer, 0},
+		"name":   {types.Varchar, 20},
+		"active": {types.Boolean, 0},
 	}
 
 	for {

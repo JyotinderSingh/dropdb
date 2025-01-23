@@ -4,6 +4,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/plan"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/scan"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type Predicate struct {
@@ -98,13 +99,13 @@ func (p *Predicate) EquatesWithConstant(fieldName string) any {
 }
 
 // ComparesWithConstant determines if there is a term of the form "F1>c"
-func (p *Predicate) ComparesWithConstant(fieldName string) (Operator, any) {
+func (p *Predicate) ComparesWithConstant(fieldName string) (types.Operator, any) {
 	for _, term := range p.terms {
-		if op, c := term.ComparesWithConstant(fieldName); op != NONE {
+		if op, c := term.ComparesWithConstant(fieldName); op != types.NONE {
 			return op, c
 		}
 	}
-	return NONE, nil
+	return types.NONE, nil
 }
 
 // EquatesWithField determines if there is a term of the form "F1=F2"

@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type RollbackRecord struct {
@@ -15,7 +15,7 @@ type RollbackRecord struct {
 // NewRollbackRecord creates a new RollbackRecord from a Page.
 func NewRollbackRecord(page *file.Page) (*RollbackRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := int(page.GetInt(txNumPos))
 
 	return &RollbackRecord{txNum: txNum}, nil
@@ -45,7 +45,7 @@ func (r *RollbackRecord) String() string {
 // followed by the transaction id.
 // The method returns the LSN of the new log record.
 func WriteRollbackToLog(logManager *log.Manager, txNum int) (int, error) {
-	record := make([]byte, 2*utils.IntSize)
+	record := make([]byte, 2*types.IntSize)
 
 	page := file.NewPageFromBytes(record)
 	page.SetInt(0, int(Rollback))

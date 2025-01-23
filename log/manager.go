@@ -3,7 +3,7 @@ package log
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"sync"
 )
 
@@ -95,9 +95,9 @@ func (m *Manager) Append(logRecord []byte) (int, error) {
 	boundary := m.logPage.GetInt(0)
 
 	recordSize := len(logRecord)
-	bytesNeeded := recordSize + utils.IntSize // (utils.IntSize) bytes for the integer storing the record size.
+	bytesNeeded := recordSize + types.IntSize // (utils.IntSize) bytes for the integer storing the record size.
 
-	if boundary-bytesNeeded < utils.IntSize { // The first 4 bits are for the boundary value.
+	if boundary-bytesNeeded < types.IntSize { // The first 4 bits are for the boundary value.
 		// The page doesn't have enough space.
 		// Flush the page to disk.
 		if err := m.flush(); err != nil {

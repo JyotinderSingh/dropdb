@@ -1,6 +1,7 @@
 package plan_impl
 
 import (
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"math/rand"
@@ -50,7 +51,7 @@ func TestSelectPlan_BasicEquality(t *testing.T) {
 	eqTerm := query.NewTerm(
 		query.NewFieldExpression("active"), // LHS
 		query.NewConstantExpression(true),  // RHS
-		query.EQ,                           // Operator
+		types.EQ,                           // Operator
 	)
 	pred := query.NewPredicateFromTerm(eqTerm)
 
@@ -124,7 +125,7 @@ func TestSelectPlan_Range(t *testing.T) {
 	ltTerm := query.NewTerm(
 		query.NewFieldExpression("id"),  // LHS
 		query.NewConstantExpression(50), // RHS
-		query.LT,                        // Operator
+		types.LT,                        // Operator
 	)
 	pred := query.NewPredicateFromTerm(ltTerm)
 
@@ -199,14 +200,14 @@ func TestSelectPlan_MultipleConditions(t *testing.T) {
 	termNameEqAlice := query.NewTerm(
 		query.NewFieldExpression("name"),
 		query.NewConstantExpression("Alice"),
-		query.EQ,
+		types.EQ,
 	)
 	predNameEqAlice := query.NewPredicateFromTerm(termNameEqAlice)
 
 	termActiveEqTrue := query.NewTerm(
 		query.NewFieldExpression("active"),
 		query.NewConstantExpression(true),
-		query.EQ,
+		types.EQ,
 	)
 	predActiveEqTrue := query.NewPredicateFromTerm(termActiveEqTrue)
 

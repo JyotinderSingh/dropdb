@@ -1,7 +1,7 @@
 package record
 
 import (
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -44,7 +44,7 @@ func TestNewLayout(t *testing.T) {
 			expectedSize:  72, // utils.IntSize(header) + 8(date) + utils.IntSize(int) + (utils.IntSize + 10*4)(varchar)
 			expectedAlign: map[string]int{
 				"timestamp": 8,
-				"count":     utils.IntSize,
+				"count":     types.IntSize,
 				"name":      1,
 			},
 		},
@@ -65,7 +65,7 @@ func TestNewLayout(t *testing.T) {
 			expectedAlign: map[string]int{
 				"created": 8,
 				"id":      8,
-				"count":   utils.IntSize,
+				"count":   types.IntSize,
 				"type":    2,
 				"name":    1,
 				"active":  1,
@@ -110,10 +110,10 @@ func TestNewLayoutFromMetadata(t *testing.T) {
 	schema.AddStringField("name", 20)
 
 	offsets := map[string]int{
-		"id":   utils.IntSize,                 // After header
-		"name": utils.IntSize + utils.IntSize, // After header and int
+		"id":   types.IntSize,                 // After header
+		"name": types.IntSize + types.IntSize, // After header and int
 	}
-	slotSize := utils.IntSize + utils.IntSize + (utils.IntSize + 20*4) // header + int + varchar(length + data) + padding
+	slotSize := types.IntSize + types.IntSize + (types.IntSize + 20*4) // header + int + varchar(length + data) + padding
 
 	layout := NewLayoutFromMetadata(schema, offsets, slotSize)
 

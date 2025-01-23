@@ -3,7 +3,7 @@ package record
 import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"sort"
 )
 
@@ -42,7 +42,7 @@ func NewLayout(schema *Schema) *Layout {
 		return fieldAlignments[fields[i]] > fieldAlignments[fields[j]]
 	})
 
-	pos := utils.IntSize // Reserve space for the empty/in-use field.
+	pos := types.IntSize // Reserve space for the empty/in-use field.
 	for _, field := range fields {
 		align := fieldAlignments[field]
 
@@ -98,17 +98,17 @@ func (l *Layout) lengthInBytes(fieldName string) int {
 	fieldType := l.schema.Type(fieldName)
 
 	switch fieldType {
-	case Integer:
-		return utils.IntSize
-	case Long:
+	case types.Integer:
+		return types.IntSize
+	case types.Long:
 		return 8 // 8 bytes for long
-	case Short:
+	case types.Short:
 		return 2 // 2 bytes for short
-	case Boolean:
+	case types.Boolean:
 		return 1 // 1 byte for boolean
-	case Date:
+	case types.Date:
 		return 8 // 8 bytes for date (64 bit Unix timestamp)
-	case Varchar:
+	case types.Varchar:
 		return file.MaxLength(l.schema.Length(fieldName))
 	default:
 		panic(fmt.Sprintf("Unknown field type: %d", fieldType))

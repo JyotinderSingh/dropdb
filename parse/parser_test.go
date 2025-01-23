@@ -1,7 +1,7 @@
 package parse
 
 import (
-	"github.com/JyotinderSingh/dropdb/record"
+	"github.com/JyotinderSingh/dropdb/types"
 	"testing"
 	"time"
 
@@ -129,13 +129,13 @@ CREATE TABLE tasks (
 	sch := tableData.NewSchema()
 	assert.Equal(t, 4, len(sch.Fields()))
 	assert.True(t, sch.HasField("id"))
-	assert.Equal(t, record.Integer, sch.Type("id"))
+	assert.Equal(t, types.Integer, sch.Type("id"))
 	assert.True(t, sch.HasField("description"))
-	assert.Equal(t, record.Varchar, sch.Type("description"))
+	assert.Equal(t, types.Varchar, sch.Type("description"))
 	assert.True(t, sch.HasField("is_done"))
-	assert.Equal(t, record.Boolean, sch.Type("is_done"))
+	assert.Equal(t, types.Boolean, sch.Type("is_done"))
 	assert.True(t, sch.HasField("due_date"))
-	assert.Equal(t, record.Date, sch.Type("due_date"))
+	assert.Equal(t, types.Date, sch.Type("due_date"))
 }
 
 // Test CREATE VIEW statement with a query inside.

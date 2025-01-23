@@ -3,11 +3,12 @@ package metadata
 import (
 	"github.com/JyotinderSingh/dropdb/buffer"
 	"github.com/JyotinderSingh/dropdb/file"
-	"github.com/JyotinderSingh/dropdb/index"
+	"github.com/JyotinderSingh/dropdb/index/common"
 	"github.com/JyotinderSingh/dropdb/log"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/tx"
 	"github.com/JyotinderSingh/dropdb/tx/concurrency"
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 	"os"
@@ -105,8 +106,8 @@ func TestIndexInfo_CreateIndexLayout(t *testing.T) {
 	require.NotNil(t, layout)
 
 	schema := layout.Schema()
-	assert.True(t, schema.HasField(index.BlockField))
-	assert.True(t, schema.HasField(index.IDField))
-	assert.True(t, schema.HasField(index.DataValueField))
-	assert.Equal(t, record.Varchar, schema.Type(index.DataValueField))
+	assert.True(t, schema.HasField(common.BlockField))
+	assert.True(t, schema.HasField(common.IDField))
+	assert.True(t, schema.HasField(common.DataValueField))
+	assert.Equal(t, types.Varchar, schema.Type(common.DataValueField))
 }

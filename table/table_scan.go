@@ -6,6 +6,7 @@ import (
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/scan"
 	"github.com/JyotinderSingh/dropdb/tx"
+	"github.com/JyotinderSingh/dropdb/types"
 	"time"
 )
 
@@ -115,22 +116,22 @@ func (ts *TableScan) GetVal(fieldName string) (any, error) {
 	fieldType := ts.layout.Schema().Type(fieldName)
 
 	switch fieldType {
-	case record.Integer:
+	case types.Integer:
 		val, err := ts.GetInt(fieldName)
 		return val, err
-	case record.Long:
+	case types.Long:
 		val, err := ts.GetLong(fieldName)
 		return val, err
-	case record.Short:
+	case types.Short:
 		val, err := ts.GetShort(fieldName)
 		return val, err
-	case record.Varchar:
+	case types.Varchar:
 		val, err := ts.GetString(fieldName)
 		return val, err
-	case record.Boolean:
+	case types.Boolean:
 		val, err := ts.GetBool(fieldName)
 		return val, err
-	case record.Date:
+	case types.Date:
 		val, err := ts.GetDate(fieldName)
 		return val, err
 	default:
@@ -164,27 +165,27 @@ func (ts *TableScan) SetDate(fieldName string, val time.Time) error {
 
 func (ts *TableScan) SetVal(fieldName string, val any) error {
 	switch ts.layout.Schema().Type(fieldName) {
-	case record.Integer:
+	case types.Integer:
 		if v, ok := val.(int); ok {
 			return ts.SetInt(fieldName, v)
 		}
-	case record.Long:
+	case types.Long:
 		if v, ok := val.(int64); ok {
 			return ts.SetLong(fieldName, v)
 		}
-	case record.Short:
+	case types.Short:
 		if v, ok := val.(int16); ok {
 			return ts.SetShort(fieldName, v)
 		}
-	case record.Varchar:
+	case types.Varchar:
 		if v, ok := val.(string); ok {
 			return ts.SetString(fieldName, v)
 		}
-	case record.Boolean:
+	case types.Boolean:
 		if v, ok := val.(bool); ok {
 			return ts.SetBool(fieldName, v)
 		}
-	case record.Date:
+	case types.Date:
 		if v, ok := val.(time.Time); ok {
 			return ts.SetDate(fieldName, v)
 		}

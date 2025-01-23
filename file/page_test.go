@@ -1,7 +1,7 @@
 package file
 
 import (
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"math"
 	"testing"
@@ -115,10 +115,10 @@ func TestPage(t *testing.T) {
 			strlen int
 			want   int
 		}{
-			{0, utils.IntSize},                       // empty string
-			{1, utils.IntSize + utf8.UTFMax},         // single character
-			{10, utils.IntSize + 10*utf8.UTFMax},     // 10 characters
-			{1000, utils.IntSize + 1000*utf8.UTFMax}, // 1000 characters
+			{0, types.IntSize},                       // empty string
+			{1, types.IntSize + utf8.UTFMax},         // single character
+			{10, types.IntSize + 10*utf8.UTFMax},     // 10 characters
+			{1000, types.IntSize + 1000*utf8.UTFMax}, // 1000 characters
 		}
 
 		for _, tc := range testCases {

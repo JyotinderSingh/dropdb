@@ -3,7 +3,7 @@ package file
 import (
 	"encoding/binary"
 	"errors"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 	"runtime"
 	"time"
 	"unicode/utf8"
@@ -58,7 +58,7 @@ func (p *Page) SetLong(offset int, n int64) {
 // GetBytes retrieves a byte slice from the buffer starting at the specified offset.
 func (p *Page) GetBytes(offset int) []byte {
 	length := p.GetInt(offset)
-	start := offset + utils.IntSize
+	start := offset + types.IntSize
 	end := start + int(length)
 	b := make([]byte, length)
 	copy(b, p.buffer[start:end])
@@ -69,7 +69,7 @@ func (p *Page) GetBytes(offset int) []byte {
 func (p *Page) SetBytes(offset int, b []byte) {
 	length := len(b)
 	p.SetInt(offset, length)
-	start := offset + utils.IntSize
+	start := offset + types.IntSize
 	copy(p.buffer[start:], b)
 }
 
@@ -130,7 +130,7 @@ func (p *Page) SetDate(offset int, date time.Time) {
 func MaxLength(strlen int) int {
 	// Golang uses UTF-8 encoding
 	// Add utils.IntSize bytes for the length prefix.
-	return utils.IntSize + strlen*utf8.UTFMax
+	return types.IntSize + strlen*utf8.UTFMax
 }
 
 // Contents returns the byte buffer maintained by the Page.

@@ -1,4 +1,4 @@
-package record
+package types
 
 type SchemaType int
 
@@ -13,6 +13,6 @@ const (
 )
 
 type FieldInfo struct {
-	fieldType SchemaType
-	length    int
+	Type   SchemaType
+	Length int
 }

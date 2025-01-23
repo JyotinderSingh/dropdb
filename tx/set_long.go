@@ -4,7 +4,7 @@ import (
 	"fmt"
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type SetLongRecord struct {
@@ -17,10 +17,10 @@ type SetLongRecord struct {
 
 func NewSetLongRecord(page *file.Page) (*SetLongRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := page.GetInt(txNumPos)
 
-	fileNamePos := txNumPos + utils.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName, err := page.GetString(fileNamePos)
 	if err != nil {
 		return nil, err
@@ -30,10 +30,10 @@ func NewSetLongRecord(page *file.Page) (*SetLongRecord, error) {
 	blockNum := page.GetInt(blockNumPos)
 	block := &file.BlockId{File: fileName, BlockNumber: int(blockNum)}
 
-	offsetPos := blockNumPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
 	offset := page.GetInt(offsetPos)
 
-	valuePos := offsetPos + utils.IntSize
+	valuePos := offsetPos + types.IntSize
 	val := page.GetLong(valuePos) // 8 bytes long
 
 	return &SetLongRecord{txNum: txNum, offset: offset, value: val, block: block}, nil
@@ -61,15 +61,15 @@ func (r *SetLongRecord) Undo(tx *Transaction) error {
 
 func WriteSetLongToLog(logManager *log.Manager, txNum int, block *file.BlockId, offset int, val int64) (int, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
-	fileNamePos := txNumPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName := block.Filename()
 
 	blockNumPos := fileNamePos + file.MaxLength(len(fileName))
 	blockNum := block.Number()
 
-	offsetPos := blockNumPos + utils.IntSize
-	valuePos := offsetPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
+	valuePos := offsetPos + types.IntSize
 	// int64 is 8 bytes
 	recordLen := valuePos + 8
 

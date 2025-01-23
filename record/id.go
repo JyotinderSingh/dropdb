@@ -8,7 +8,7 @@ type ID struct {
 }
 
 // NewID creates a new ID having the specified location in the specified block.
-func NewID(blockNumber int, slot int) *ID {
+func NewID(blockNumber, slot int) *ID {
 	return &ID{blockNumber, slot}
 }
 

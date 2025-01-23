@@ -2,6 +2,7 @@ package plan_impl
 
 import (
 	"github.com/JyotinderSingh/dropdb/record"
+	"github.com/JyotinderSingh/dropdb/types"
 	"testing"
 	"time"
 
@@ -157,7 +158,7 @@ func TestBasicUpdatePlanner_Modify(t *testing.T) {
 		query.NewTerm(
 			query.NewFieldExpression("age"),
 			query.NewConstantExpression(30),
-			query.GE,
+			types.GE,
 		),
 	)
 
@@ -216,7 +217,7 @@ func TestBasicUpdatePlanner_Delete(t *testing.T) {
 	pred := query.NewPredicateFromTerm(query.NewTerm(
 		query.NewFieldExpression("val"),
 		query.NewConstantExpression(2),
-		query.GE,
+		types.GE,
 	))
 	delData := parse.NewDeleteData("temp", pred)
 

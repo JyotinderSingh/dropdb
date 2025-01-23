@@ -2,11 +2,11 @@ package tx
 
 import (
 	"fmt"
+	"github.com/JyotinderSingh/dropdb/types"
 	"time"
 
 	"github.com/JyotinderSingh/dropdb/file"
 	"github.com/JyotinderSingh/dropdb/log"
-	"github.com/JyotinderSingh/dropdb/utils"
 )
 
 type SetDateRecord struct {
@@ -19,10 +19,10 @@ type SetDateRecord struct {
 
 func NewSetDateRecord(page *file.Page) (*SetDateRecord, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
 	txNum := page.GetInt(txNumPos)
 
-	fileNamePos := txNumPos + utils.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName, err := page.GetString(fileNamePos)
 	if err != nil {
 		return nil, err
@@ -32,10 +32,10 @@ func NewSetDateRecord(page *file.Page) (*SetDateRecord, error) {
 	blockNum := page.GetInt(blockNumPos)
 	block := &file.BlockId{File: fileName, BlockNumber: int(blockNum)}
 
-	offsetPos := blockNumPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
 	offset := page.GetInt(offsetPos)
 
-	valuePos := offsetPos + utils.IntSize
+	valuePos := offsetPos + types.IntSize
 	val := page.GetDate(valuePos)
 
 	return &SetDateRecord{txNum: txNum, offset: offset, value: val, block: block}, nil
@@ -63,15 +63,15 @@ func (r *SetDateRecord) Undo(tx *Transaction) error {
 
 func WriteSetDateToLog(logManager *log.Manager, txNum int, block *file.BlockId, offset int, val time.Time) (int, error) {
 	operationPos := 0
-	txNumPos := operationPos + utils.IntSize
-	fileNamePos := txNumPos + utils.IntSize
+	txNumPos := operationPos + types.IntSize
+	fileNamePos := txNumPos + types.IntSize
 	fileName := block.Filename()
 
 	blockNumPos := fileNamePos + file.MaxLength(len(fileName))
 	blockNum := block.Number()
 
-	offsetPos := blockNumPos + utils.IntSize
-	valuePos := offsetPos + utils.IntSize
+	offsetPos := blockNumPos + types.IntSize
+	valuePos := offsetPos + types.IntSize
 	// time.Time stored as int64 (8 bytes)
 	recordLen := valuePos + 8
 

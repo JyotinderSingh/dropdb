@@ -2,9 +2,11 @@ package metadata
 
 import (
 	"github.com/JyotinderSingh/dropdb/index"
+	"github.com/JyotinderSingh/dropdb/index/common"
 	"github.com/JyotinderSingh/dropdb/index/hash"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/tx"
+	"github.com/JyotinderSingh/dropdb/types"
 )
 
 type IndexInfo struct {
@@ -71,21 +73,21 @@ func (ii *IndexInfo) DistinctValues(fieldName string) int {
 // Schema information about the indexed field is obtained from the table's schema.
 func (ii *IndexInfo) CreateIndexLayout() *record.Layout {
 	schema := record.NewSchema()
-	schema.AddIntField(index.BlockField)
-	schema.AddIntField(index.IDField)
+	schema.AddIntField(common.BlockField)
+	schema.AddIntField(common.IDField)
 	switch ii.tableSchema.Type(ii.fieldName) {
-	case record.Integer:
-		schema.AddIntField(index.DataValueField)
-	case record.Varchar:
-		schema.AddStringField(index.DataValueField, ii.tableSchema.Length(ii.fieldName))
-	case record.Boolean:
-		schema.AddBoolField(index.DataValueField)
-	case record.Long:
-		schema.AddLongField(index.DataValueField)
-	case record.Short:
-		schema.AddShortField(index.DataValueField)
-	case record.Date:
-		schema.AddDateField(index.DataValueField)
+	case types.Integer:
+		schema.AddIntField(common.DataValueField)
+	case types.Varchar:
+		schema.AddStringField(common.DataValueField, ii.tableSchema.Length(ii.fieldName))
+	case types.Boolean:
+		schema.AddBoolField(common.DataValueField)
+	case types.Long:
+		schema.AddLongField(common.DataValueField)
+	case types.Short:
+		schema.AddShortField(common.DataValueField)
+	case types.Date:
+		schema.AddDateField(common.DataValueField)
 	}
 
 	return record.NewLayout(schema)

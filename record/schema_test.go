@@ -1,6 +1,7 @@
 package record
 
 import (
+	"github.com/JyotinderSingh/dropdb/types"
 	"github.com/stretchr/testify/assert"
 	"testing"
 )
@@ -11,12 +12,12 @@ func TestAddField(t *testing.T) {
 	tests := []struct {
 		name   string
 		field  string
-		typ    SchemaType
+		typ    types.SchemaType
 		length int
 	}{
-		{"integer field", "age", Integer, 0},
-		{"varchar field", "name", Varchar, 20},
-		{"boolean field", "active", Boolean, 0},
+		{"integer field", "age", types.Integer, 0},
+		{"varchar field", "name", types.Varchar, 20},
+		{"boolean field", "active", types.Boolean, 0},
 	}
 
 	for _, tt := range tests {
@@ -25,8 +26,8 @@ func TestAddField(t *testing.T) {
 
 			info, ok := s.info[tt.field]
 			assert.True(t, ok, "Field %s not found in info map", tt.field)
-			assert.Equal(t, tt.typ, info.fieldType, "Field type mismatch")
-			assert.Equal(t, tt.length, info.length, "Field length mismatch")
+			assert.Equal(t, tt.typ, info.Type, "Field type mismatch")
+			assert.Equal(t, tt.length, info.Length, "Field length mismatch")
 		})
 	}
 }
@@ -38,49 +39,49 @@ func TestTypeSpecificAdders(t *testing.T) {
 		name     string
 		adder    func()
 		field    string
-		expected SchemaType
+		expected types.SchemaType
 		length   int
 	}{
 		{
 			"AddIntField",
 			func() { s.AddIntField("age") },
 			"age",
-			Integer,
+			types.Integer,
 			0,
 		},
 		{
 			"AddStringField",
 			func() { s.AddStringField("name", 30) },
 			"name",
-			Varchar,
+			types.Varchar,
 			30,
 		},
 		{
 			"AddBoolField",
 			func() { s.AddBoolField("active") },
 			"active",
-			Boolean,
+			types.Boolean,
 			0,
 		},
 		{
 			"AddLongField",
 			func() { s.AddLongField("id") },
 			"id",
-			Long,
+			types.Long,
 			0,
 		},
 		{
 			"AddShortField",
 			func() { s.AddShortField("count") },
 			"count",
-			Short,
+			types.Short,
 			0,
 		},
 		{
 			"AddDateField",
 			func() { s.AddDateField("created") },
 			"created",
-			Date,
+			types.Date,
 			0,
 		},
 	}
@@ -99,9 +100,9 @@ func TestTypeSpecificAdders(t *testing.T) {
 func TestAdd(t *testing.T) {
 	source := &Schema{
 		fields: []string{"id", "name"},
-		info: map[string]FieldInfo{
-			"id":   {Integer, 0},
-			"name": {Varchar, 25},
+		info: map[string]types.FieldInfo{
+			"id":   {types.Integer, 0},
+			"name": {types.Varchar, 25},
 		},
 	}
 
@@ -116,23 +117,23 @@ func TestAdd(t *testing.T) {
 	// Check id field
 	idInfo, ok := dest.info["id"]
 	assert.True(t, ok, "id field not found")
-	assert.Equal(t, Integer, idInfo.fieldType, "id field type mismatch")
-	assert.Equal(t, 0, idInfo.length, "id field length mismatch")
+	assert.Equal(t, types.Integer, idInfo.Type, "id field type mismatch")
+	assert.Equal(t, 0, idInfo.Length, "id field length mismatch")
 
 	// Check name field
 	nameInfo, ok := dest.info["name"]
 	assert.True(t, ok, "name field not found")
-	assert.Equal(t, Varchar, nameInfo.fieldType, "name field type mismatch")
-	assert.Equal(t, 25, nameInfo.length, "name field length mismatch")
+	assert.Equal(t, types.Varchar, nameInfo.Type, "name field type mismatch")
+	assert.Equal(t, 25, nameInfo.Length, "name field length mismatch")
 }
 
 func TestAddAll(t *testing.T) {
 	source := &Schema{
 		fields: []string{"id", "name", "active"},
-		info: map[string]FieldInfo{
-			"id":     {Integer, 0},
-			"name":   {Varchar, 25},
-			"active": {Boolean, 0},
+		info: map[string]types.FieldInfo{
+			"id":     {types.Integer, 0},
+			"name":   {types.Varchar, 25},
+			"active": {types.Boolean, 0},
 		},
 	}
 
