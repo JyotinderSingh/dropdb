@@ -17,7 +17,7 @@ import (
 	"testing"
 )
 
-func setupBTreeIndexTest(t *testing.T) (index.Index, *tx.Transaction, func()) {
+func setupBTreeIndexTest(t *testing.T) (index.Index, func()) {
 	dbDir := t.TempDir()
 
 	fm, err := file.NewManager(dbDir, 800)
@@ -50,11 +50,11 @@ func setupBTreeIndexTest(t *testing.T) (index.Index, *tx.Transaction, func()) {
 		}
 	}
 
-	return btreeIndex, transaction, cleanup
+	return btreeIndex, cleanup
 }
 
 func TestBTreeIndex_BeforeFirst(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	err := btreeIndex.BeforeFirst("test_key")
@@ -63,7 +63,7 @@ func TestBTreeIndex_BeforeFirst(t *testing.T) {
 }
 
 func TestBTreeIndex_Insert_And_Search(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	// Insert multiple records to test both leaf and directory operations
@@ -102,7 +102,7 @@ func TestBTreeIndex_Insert_And_Search(t *testing.T) {
 }
 
 func TestBTreeIndex_Delete(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	// Insert and then delete a record
@@ -123,7 +123,7 @@ func TestBTreeIndex_Delete(t *testing.T) {
 }
 
 func TestBTreeIndex_Next_NoResults(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	err := btreeIndex.BeforeFirst("nonexistent_key")
@@ -135,7 +135,7 @@ func TestBTreeIndex_Next_NoResults(t *testing.T) {
 }
 
 func TestBTreeIndex_SearchCost(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	numBlocks := 1000
@@ -147,7 +147,7 @@ func TestBTreeIndex_SearchCost(t *testing.T) {
 }
 
 func TestBTreeIndex_MultipleValues(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	// Insert records with different keys
@@ -178,7 +178,7 @@ func TestBTreeIndex_MultipleValues(t *testing.T) {
 }
 
 func TestBTreeIndex_InsertDuplicateKeys(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	key := "same_key"
@@ -215,7 +215,7 @@ func TestBTreeIndex_InsertDuplicateKeys(t *testing.T) {
 
 // Warning: This test is slow
 func TestBTreeIndex_NodeSplits(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	// Insert many records to force leaf node splits
@@ -247,7 +247,7 @@ func TestBTreeIndex_NodeSplits(t *testing.T) {
 
 // Warning: This test is slow
 func TestBTreeIndex_DirectorySplits(t *testing.T) {
-	btreeIndex, _, cleanup := setupBTreeIndexTest(t)
+	btreeIndex, cleanup := setupBTreeIndexTest(t)
 	defer cleanup()
 
 	// Insert records with same key to force directory splits
