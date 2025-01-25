@@ -22,7 +22,7 @@ type Index struct {
 	indexName   string
 	layout      *record.Layout
 	searchKey   any
-	tableScan   *table.TableScan
+	tableScan   *table.Scan
 }
 
 // NewIndex opens a hash index for the specified index.

@@ -20,7 +20,7 @@ import (
 
 type testSetup struct {
 	transaction *tx.Transaction
-	tableScan   *table.TableScan
+	tableScan   *table.Scan
 	idx         index.Index
 	cleanup     func()
 }

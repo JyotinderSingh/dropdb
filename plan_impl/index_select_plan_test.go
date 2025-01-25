@@ -21,7 +21,7 @@ import (
 
 type indexPlanTestSetup struct {
 	transaction *tx.Transaction
-	tableScan   *table.TableScan
+	tableScan   *table.Scan
 	idx         index.Index
 	indexInfo   *metadata.IndexInfo
 	cleanup     func()

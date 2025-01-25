@@ -9,15 +9,18 @@ import (
 
 var _ scan.Scan = (*IndexSelectScan)(nil)
 
+// IndexSelectScan is a scan that combines an index scan with a table scan.
+// It is used to scan the data records of a table that satisfy a selection
+// constant on an index.
 type IndexSelectScan struct {
-	tableScan *table.TableScan
+	tableScan *table.Scan
 	idx       index.Index
 	value     any
 }
 
 // NewIndexSelectScan creates an index select scan for the specified index
 // and selection constant.
-func NewIndexSelectScan(tableScan *table.TableScan, idx index.Index, value any) (*IndexSelectScan, error) {
+func NewIndexSelectScan(tableScan *table.Scan, idx index.Index, value any) (*IndexSelectScan, error) {
 	iss := &IndexSelectScan{
 		tableScan: tableScan,
 		idx:       idx,

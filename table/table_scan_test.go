@@ -17,7 +17,7 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-func setupTestTable(t *testing.T) (*TableScan, *tx.Transaction, func()) {
+func setupTestTable(t *testing.T) (*Scan, *tx.Transaction, func()) {
 	// temporary db directory
 	dbDir := t.TempDir()
 

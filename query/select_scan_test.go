@@ -18,7 +18,7 @@ import (
 
 // This helper sets up a TableScan with some records we can filter on.
 // Replace with your own setup code if needed.
-func setupTestTableScan(t *testing.T) (*table.TableScan, func()) {
+func setupTestTableScan(t *testing.T) (*table.Scan, func()) {
 	transaction, layout, cleanup := createTransactionAndLayout(t)
 	ts, err := table.NewTableScan(transaction, "selectscan_test_table", layout)
 	require.NoError(t, err)

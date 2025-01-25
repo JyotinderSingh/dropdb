@@ -57,7 +57,7 @@ func setupTestProductScan(t *testing.T) (*ProductScan, func()) {
 }
 
 // setupTestTable sets up a TableScan with the given schema and data rows.
-func setupTestTable(t *testing.T, tableName string, defineSchema func(*record.Schema), data []map[string]interface{}) (*table.TableScan, func()) {
+func setupTestTable(t *testing.T, tableName string, defineSchema func(*record.Schema), data []map[string]interface{}) (*table.Scan, func()) {
 	// Create a transaction and layout
 	tx, layout, cleanup := createCustomTransactionAndLayout(t, defineSchema)
 

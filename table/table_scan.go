@@ -13,10 +13,10 @@ import (
 const fileExtension = ".tbl"
 
 // Ensure TableScan implements the UpdateScan interface.
-var _ scan.UpdateScan = (*TableScan)(nil)
+var _ scan.UpdateScan = (*Scan)(nil)
 
-// TableScan provides the abstraction of an arbitrarily large array of records.
-type TableScan struct {
+// Scan provides the abstraction of an arbitrarily large array of records.
+type Scan struct {
 	tx          *tx.Transaction
 	layout      *record.Layout
 	recordPage  *record.Page
@@ -25,12 +25,12 @@ type TableScan struct {
 }
 
 // NewTableScan creates a new table scan
-func NewTableScan(tx *tx.Transaction, tableName string, layout *record.Layout) (*TableScan, error) {
+func NewTableScan(tx *tx.Transaction, tableName string, layout *record.Layout) (*Scan, error) {
 	if layout.SlotSize() > tx.BlockSize() {
 		return nil, fmt.Errorf("record slot size (%d) exceeds block size (%d)", layout.SlotSize(), tx.BlockSize())
 	}
 
-	ts := &TableScan{
+	ts := &Scan{
 		tx:          tx,
 		layout:      layout,
 		fileName:    tableName + fileExtension,
@@ -55,7 +55,7 @@ func NewTableScan(tx *tx.Transaction, tableName string, layout *record.Layout) (
 	return ts, nil
 }
 
-func (ts *TableScan) BeforeFirst() error {
+func (ts *Scan) BeforeFirst() error {
 	return ts.moveToBlock(0)
 }
 
@@ -64,7 +64,7 @@ func (ts *TableScan) BeforeFirst() error {
 // Internally, it moves to the next slot in the current block.
 // If there are no more slots in the block, it moves to the next block.
 // If there are no more blocks, it returns false.
-func (ts *TableScan) Next() (bool, error) {
+func (ts *Scan) Next() (bool, error) {
 	slot, err := ts.recordPage.NextAfter(ts.currentSlot)
 
 	if err != nil {
@@ -88,31 +88,31 @@ func (ts *TableScan) Next() (bool, error) {
 	return true, nil
 }
 
-func (ts *TableScan) GetInt(fieldName string) (int, error) {
+func (ts *Scan) GetInt(fieldName string) (int, error) {
 	return ts.recordPage.GetInt(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetLong(fieldName string) (int64, error) {
+func (ts *Scan) GetLong(fieldName string) (int64, error) {
 	return ts.recordPage.GetLong(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetShort(fieldName string) (int16, error) {
+func (ts *Scan) GetShort(fieldName string) (int16, error) {
 	return ts.recordPage.GetShort(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetString(fieldName string) (string, error) {
+func (ts *Scan) GetString(fieldName string) (string, error) {
 	return ts.recordPage.GetString(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetBool(fieldName string) (bool, error) {
+func (ts *Scan) GetBool(fieldName string) (bool, error) {
 	return ts.recordPage.GetBool(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetDate(fieldName string) (time.Time, error) {
+func (ts *Scan) GetDate(fieldName string) (time.Time, error) {
 	return ts.recordPage.GetDate(ts.currentSlot, fieldName)
 }
 
-func (ts *TableScan) GetVal(fieldName string) (any, error) {
+func (ts *Scan) GetVal(fieldName string) (any, error) {
 	fieldType := ts.layout.Schema().Type(fieldName)
 
 	switch fieldType {
@@ -139,31 +139,31 @@ func (ts *TableScan) GetVal(fieldName string) (any, error) {
 	}
 }
 
-func (ts *TableScan) SetInt(fieldName string, val int) error {
+func (ts *Scan) SetInt(fieldName string, val int) error {
 	return ts.recordPage.SetInt(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetLong(fieldName string, val int64) error {
+func (ts *Scan) SetLong(fieldName string, val int64) error {
 	return ts.recordPage.SetLong(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetShort(fieldName string, val int16) error {
+func (ts *Scan) SetShort(fieldName string, val int16) error {
 	return ts.recordPage.SetShort(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetString(fieldName string, val string) error {
+func (ts *Scan) SetString(fieldName string, val string) error {
 	return ts.recordPage.SetString(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetBool(fieldName string, val bool) error {
+func (ts *Scan) SetBool(fieldName string, val bool) error {
 	return ts.recordPage.SetBool(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetDate(fieldName string, val time.Time) error {
+func (ts *Scan) SetDate(fieldName string, val time.Time) error {
 	return ts.recordPage.SetDate(ts.currentSlot, fieldName, val)
 }
 
-func (ts *TableScan) SetVal(fieldName string, val any) error {
+func (ts *Scan) SetVal(fieldName string, val any) error {
 	switch ts.layout.Schema().Type(fieldName) {
 	case types.Integer:
 		if v, ok := val.(int); ok {
@@ -193,13 +193,13 @@ func (ts *TableScan) SetVal(fieldName string, val any) error {
 	return fmt.Errorf("type mismatch for field %s", fieldName)
 }
 
-func (ts *TableScan) HasField(fieldName string) bool {
+func (ts *Scan) HasField(fieldName string) bool {
 	return ts.layout.Schema().HasField(fieldName)
 }
 
 // Close closes the scan.
 // Unpins the current record page.
-func (ts *TableScan) Close() {
+func (ts *Scan) Close() {
 	if ts.recordPage != nil {
 		ts.tx.Unpin(ts.recordPage.Block())
 	}
@@ -208,7 +208,7 @@ func (ts *TableScan) Close() {
 // Insert inserts a new record somewhere in the scan and moves the scan to the new record.
 // If there is no room in the current block, it moves to the next block.
 // If there are no more blocks, it creates a new block.
-func (ts *TableScan) Insert() error {
+func (ts *Scan) Insert() error {
 	if ts.layout.SlotSize() > ts.tx.BlockSize() {
 		return fmt.Errorf("record slot size (%d) exceeds block size (%d)", ts.layout.SlotSize(), ts.tx.BlockSize())
 	}
@@ -244,15 +244,15 @@ func (ts *TableScan) Insert() error {
 	}
 }
 
-func (ts *TableScan) Delete() error {
+func (ts *Scan) Delete() error {
 	return ts.recordPage.Delete(ts.currentSlot)
 }
 
-func (ts *TableScan) GetRecordID() *record.ID {
+func (ts *Scan) GetRecordID() *record.ID {
 	return record.NewID(ts.recordPage.Block().Number(), ts.currentSlot)
 }
 
-func (ts *TableScan) MoveToRecordID(rid *record.ID) error {
+func (ts *Scan) MoveToRecordID(rid *record.ID) error {
 	ts.Close()
 
 	blk := &file.BlockId{
@@ -273,7 +273,7 @@ func (ts *TableScan) MoveToRecordID(rid *record.ID) error {
 // Private helper methods
 
 // moveToBlock moves the scan to the specified block number.
-func (ts *TableScan) moveToBlock(blockNum int) error {
+func (ts *Scan) moveToBlock(blockNum int) error {
 	ts.Close()
 
 	blk := &file.BlockId{
@@ -292,7 +292,7 @@ func (ts *TableScan) moveToBlock(blockNum int) error {
 }
 
 // moveToNewBlock moves the scan to a new block. It appends a new block to the file and loads it into the record page.
-func (ts *TableScan) moveToNewBlock() error {
+func (ts *Scan) moveToNewBlock() error {
 	ts.Close()
 
 	blk, err := ts.tx.Append(ts.fileName)
@@ -315,7 +315,7 @@ func (ts *TableScan) moveToNewBlock() error {
 }
 
 // atLastBlock returns true if the scan is at the last block.
-func (ts *TableScan) atLastBlock() (bool, error) {
+func (ts *Scan) atLastBlock() (bool, error) {
 	fileSize, err := ts.tx.Size(ts.fileName)
 	if err != nil {
 		return false, fmt.Errorf("get file size: %w", err)

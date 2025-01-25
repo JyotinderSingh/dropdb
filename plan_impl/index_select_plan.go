@@ -34,7 +34,7 @@ func (isp *IndexSelectPlan) Open() (scan.Scan, error) {
 	if err != nil {
 		return nil, err
 	}
-	tableScan, ok := inputScan.(*table.TableScan)
+	tableScan, ok := inputScan.(*table.Scan)
 	if !ok {
 		return nil, fmt.Errorf("IndexSelectPlan requires a tablescan")
 	}
