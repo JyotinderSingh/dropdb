@@ -15,7 +15,7 @@ type BasicUpdatePlanner struct {
 }
 
 // NewBasicUpdatePlanner creates a new BasicUpdatePlanner.
-func NewBasicUpdatePlanner(metadataManager *metadata.Manager) *BasicUpdatePlanner {
+func NewBasicUpdatePlanner(metadataManager *metadata.Manager) UpdatePlanner {
 	return &BasicUpdatePlanner{metadataManager: metadataManager}
 }
 
