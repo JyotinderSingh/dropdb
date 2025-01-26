@@ -31,6 +31,10 @@ func NewSortScan(runs []*materialize.TempTable, comparator *RecordComparator) (*
 		hasMore2:    false,
 	}
 
+	if len(runs) < 1 {
+		return nil, nil
+	}
+	
 	var err error
 	ss.scan1, err = runs[0].Open()
 	if err != nil {
