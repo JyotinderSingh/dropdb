@@ -27,7 +27,7 @@ DropDB is built incrementally, with the following features implemented or planne
   - Logical and physical plan generation for efficient execution.
 - [x] SQL Interface  
   - Standardized interfaces to interact with the database using `database/sql` package.
-- [ ] Indexing  
+- [x] Indexing  
   - Support for indexes to improve query performance.
 - [ ] Materialization and Sorting  
   - Temporary data storage and ordering for efficient query execution.
