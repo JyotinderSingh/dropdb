@@ -190,7 +190,7 @@ func TestGroupByScan_HasField(t *testing.T) {
 	// Original underlying fields that are not grouped or aggregated
 	// won't necessarily appear as "HasField" in GroupByScan,
 	// unless they are used as group fields or aggregator fields.
-	// So 'salary' by itself is not directly accessible (unless you implement differently).
+	// So 'salary' by itself is not directly accessible.
 	assert.False(t, gbScan.HasField("salary"), "Should not have direct access to 'salary' unless it's a group field or aggregator output.")
 }
 
@@ -364,7 +364,7 @@ func TestGroupByScan_MinFunction(t *testing.T) {
 	}
 
 	// Verify we got the correct number of groups.
-	// If your table has exactly 3 depts: Engineering, Marketing, Sales:
+	//Engineering, Marketing, Sales:
 	assert.Equal(t, 3, len(results), "Should have 3 distinct dept groups")
 
 	// Based on the sample data (Engineering: [2500,3000], Marketing: [1500,1500], Sales: [1000,1800,2000])
