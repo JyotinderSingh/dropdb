@@ -50,6 +50,8 @@ func CompareSupportedTypes(lhs, rhs any, op Operator) bool {
 // compareInts compares two integers.
 func compareInts(lhs, rhs int, op Operator) bool {
 	switch op {
+	case NE:
+		return lhs != rhs
 	case EQ:
 		return lhs == rhs
 	case LT:
@@ -69,6 +71,8 @@ func compareInts(lhs, rhs int, op Operator) bool {
 // compareInt64s compares two int64 values.
 func compareInt64s(lhs, rhs int64, op Operator) bool {
 	switch op {
+	case NE:
+		return lhs != rhs
 	case EQ:
 		return lhs == rhs
 	case LT:
@@ -88,6 +92,8 @@ func compareInt64s(lhs, rhs int64, op Operator) bool {
 // compareInt16s compares two int16 values.
 func compareInt16s(lhs, rhs int16, op Operator) bool {
 	switch op {
+	case NE:
+		return lhs != rhs
 	case EQ:
 		return lhs == rhs
 	case LT:
@@ -107,6 +113,8 @@ func compareInt16s(lhs, rhs int16, op Operator) bool {
 // compareStrings compares two strings.
 func compareStrings(lhs, rhs string, op Operator) bool {
 	switch op {
+	case NE:
+		return lhs != rhs
 	case EQ:
 		return lhs == rhs
 	case LT:
@@ -139,6 +147,8 @@ func compareBools(lhs, rhs bool, op Operator) bool {
 // compareTimes compares two time.Time values.
 func compareTimes(lhs, rhs time.Time, op Operator) bool {
 	switch op {
+	case NE:
+		return !lhs.Equal(rhs)
 	case EQ:
 		return lhs.Equal(rhs)
 	case LT:
