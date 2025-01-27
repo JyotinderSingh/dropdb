@@ -58,10 +58,10 @@ func createGroupByTransactionAndLayout(t *testing.T) (*tx.Transaction, *record.L
 	dbDir := t.TempDir()
 
 	fm, err := file.NewManager(dbDir, 400)
-	require.NoError(t, err, "failed to create file manager")
+	require.NoError(t, err)
 
 	lm, err := log.NewManager(fm, "logfile")
-	require.NoError(t, err, "failed to create log manager")
+	require.NoError(t, err)
 
 	bm := buffer.NewManager(fm, lm, 3)
 	lt := concurrency.NewLockTable()
@@ -164,7 +164,7 @@ func TestGroupByScan_SingleGroupField(t *testing.T) {
 	//   Sales: 1000, 2000, 1800 -> max = 2000
 	//   Marketing: 1500, 1500 -> max = 1500
 	//   Engineering: 2500, 3000 -> max = 3000
-	assert.Equal(t, 3, len(deptToMax), "We expect 3 distinct dept groups")
+	assert.Equal(t, 3, len(deptToMax))
 	assert.Equal(t, 2000, deptToMax["Sales"])
 	assert.Equal(t, 1500, deptToMax["Marketing"])
 	assert.Equal(t, 3000, deptToMax["Engineering"])
@@ -215,7 +215,7 @@ func TestGroupByScan_FieldNotFound(t *testing.T) {
 	require.True(t, hasNext)
 
 	_, err = gbScan.GetInt("someRandomField")
-	assert.Error(t, err, "Accessing a field not in group fields or aggregator fields should return an error")
+	assert.Error(t, err)
 }
 
 //  5. Test multiple aggregators (if you have them). For demo, we reuse Max twice.
@@ -269,7 +269,7 @@ func TestGroupByScan_MultipleAggregators(t *testing.T) {
 	}
 
 	// 1) We expect exactly 3 groups in the data
-	assert.Equal(t, 3, len(results), "Expected exactly 3 dept groups")
+	assert.Equal(t, 3, len(results))
 
 	// 2) Check each group's aggregator values
 	//    For example, if you inserted (in sorted order):
@@ -281,20 +281,20 @@ func TestGroupByScan_MultipleAggregators(t *testing.T) {
 	// Engineering
 	eng, ok := results["Engineering"]
 	require.True(t, ok, "Engineering group not found in results")
-	assert.Equal(t, 3000, eng.maxSalary, "maxOfsalary for Engineering should be 3000")
-	assert.Equal(t, "Engineering", eng.maxDept, "maxOfdept for Engineering should be 'Engineering'")
+	assert.Equal(t, 3000, eng.maxSalary)
+	assert.Equal(t, "Engineering", eng.maxDept)
 
 	// Marketing
 	mkt, ok := results["Marketing"]
-	require.True(t, ok, "Marketing group not found in results")
-	assert.Equal(t, 1500, mkt.maxSalary, "maxOfsalary for Marketing should be 1500")
-	assert.Equal(t, "Marketing", mkt.maxDept, "maxOfdept for Marketing should be 'Marketing'")
+	require.True(t, ok)
+	assert.Equal(t, 1500, mkt.maxSalary)
+	assert.Equal(t, "Marketing", mkt.maxDept)
 
 	// Sales
 	sales, ok := results["Sales"]
 	require.True(t, ok, "Sales group not found in results")
-	assert.Equal(t, 2000, sales.maxSalary, "maxOfsalary for Sales should be 2000")
-	assert.Equal(t, "Sales", sales.maxDept, "maxOfdept for Sales should be 'Sales'")
+	assert.Equal(t, 2000, sales.maxSalary)
+	assert.Equal(t, "Sales", sales.maxDept)
 }
 
 //  6. Test reading the aggregator values across all groups to confirm grouping properly
@@ -327,7 +327,7 @@ func TestGroupByScan_MultipleGroupsIteration(t *testing.T) {
 	}
 
 	// We inserted 3 distinct "dept": Sales, Marketing, Engineering
-	assert.Equal(t, 3, groupsCount, "Should have 3 distinct groups.")
+	assert.Equal(t, 3, groupsCount)
 }
 
 func TestGroupByScan_MinFunction(t *testing.T) {
@@ -369,9 +369,9 @@ func TestGroupByScan_MinFunction(t *testing.T) {
 
 	// Based on the sample data (Engineering: [2500,3000], Marketing: [1500,1500], Sales: [1000,1800,2000])
 	// => minOfsalary = 2500 (Eng), 1500 (Marketing), 1000 (Sales)
-	assert.Equal(t, 2500, results["Engineering"], "Engineering min salary should be 2500")
-	assert.Equal(t, 1500, results["Marketing"], "Marketing min salary should be 1500")
-	assert.Equal(t, 1000, results["Sales"], "Sales min salary should be 1000")
+	assert.Equal(t, 2500, results["Engineering"])
+	assert.Equal(t, 1500, results["Marketing"])
+	assert.Equal(t, 1000, results["Sales"])
 }
 
 func TestGroupByScan_SumFunction(t *testing.T) {
@@ -411,11 +411,11 @@ func TestGroupByScan_SumFunction(t *testing.T) {
 		results[dept] = sumVal
 	}
 
-	assert.Equal(t, 3, len(results), "Should have 3 distinct dept groups")
+	assert.Equal(t, 3, len(results))
 
-	assert.EqualValues(t, 5500, results["Engineering"], "Engineering sum should be 5500")
-	assert.EqualValues(t, 3000, results["Marketing"], "Marketing sum should be 3000")
-	assert.EqualValues(t, 4800, results["Sales"], "Sales sum should be 4800")
+	assert.EqualValues(t, 5500, results["Engineering"])
+	assert.EqualValues(t, 3000, results["Marketing"])
+	assert.EqualValues(t, 4800, results["Sales"])
 }
 
 func TestGroupByScan_CountFunction(t *testing.T) {
@@ -458,9 +458,9 @@ func TestGroupByScan_CountFunction(t *testing.T) {
 
 	//  Engineering: 2 rows, Marketing: 2 rows, Sales: 3 rows
 	// => countOfsalary => 2, 2, 3
-	assert.EqualValues(t, 2, results["Engineering"], "Engineering should have 2 rows")
-	assert.EqualValues(t, 2, results["Marketing"], "Marketing should have 2 rows")
-	assert.EqualValues(t, 3, results["Sales"], "Sales should have 3 rows")
+	assert.EqualValues(t, 2, results["Engineering"])
+	assert.EqualValues(t, 2, results["Marketing"])
+	assert.EqualValues(t, 3, results["Sales"])
 }
 
 func TestGroupByScan_AvgFunction(t *testing.T) {
@@ -499,12 +499,12 @@ func TestGroupByScan_AvgFunction(t *testing.T) {
 		results[dept] = avgVal
 	}
 
-	assert.Equal(t, 3, len(results), "Should have 3 distinct dept groups")
+	assert.Equal(t, 3, len(results))
 
 	//   Engineering: (2500 + 3000)/2 = 2750.0
 	//   Marketing: (1500 + 1500)/2 = 1500.0
 	//   Sales: (1000 + 1800 + 2000)/3 = 4800/3 = 1600.0
-	assert.InDelta(t, 2750.0, results["Engineering"], 0.0001, "Engineering avg should be ~2750.0")
-	assert.InDelta(t, 1500.0, results["Marketing"], 0.0001, "Marketing avg should be ~1500.0")
-	assert.InDelta(t, 1600.0, results["Sales"], 0.0001, "Sales avg should be ~1600.0")
+	assert.InDelta(t, 2750.0, results["Engineering"], 0.0001)
+	assert.InDelta(t, 1500.0, results["Marketing"], 0.0001)
+	assert.InDelta(t, 1600.0, results["Sales"], 0.0001)
 }
