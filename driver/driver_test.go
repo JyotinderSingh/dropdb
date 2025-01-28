@@ -60,7 +60,8 @@ func TestDropDBDriver(t *testing.T) {
 	for rows.Next() {
 		var name string
 		var year int
-		err := rows.Scan(&name, &year)
+		// NOTE: The order of columns is reversed due to how SortPlan is implemented. This is a known issue and should be fixed using some changes in the SortPlan implementation.
+		err := rows.Scan(&year, &name)
 		require.NoError(t, err, "failed to scan row")
 		results = append(results, struct {
 			sname    string

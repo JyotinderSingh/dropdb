@@ -66,7 +66,8 @@ func main() {
 	for rows.Next() {
 		var name string
 		var year int
-		if err := rows.Scan(&name, &year); err != nil {
+		// NOTE: The order of columns is reversed due to how SortPlan is implemented. This is a known issue and should be fixed using some changes in the SortPlan implementation.
+		if err := rows.Scan(&year, &name); err != nil {
 			log.Fatalf("Failed to scan row: %v\n", err)
 		}
 		fmt.Printf("  - Name: %s, Graduation Year: %d\n", name, year)
