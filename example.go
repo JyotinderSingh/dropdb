@@ -25,8 +25,10 @@ func main() {
 	}
 	defer db.Close()
 
-	// Create a table
-	fmt.Println("Creating table...")
+	// ----------------------------------------------------------------
+	// 1. Create a table (auto-commit mode)
+	// ----------------------------------------------------------------
+	fmt.Println("Creating table in auto-commit mode...")
 	createTableSQL := `
         CREATE TABLE student (
             sname VARCHAR(10),
@@ -36,10 +38,42 @@ func main() {
 	if _, err = db.Exec(createTableSQL); err != nil {
 		log.Fatalf("Failed to create table: %v\n", err)
 	}
-	fmt.Println("Table 'student' created successfully.")
+	fmt.Println("Table 'student' created successfully.\n")
 
-	// Insert rows into the table
-	fmt.Println("Inserting rows...")
+	// ----------------------------------------------------------------
+	// 2. Demonstrate a ROLLBACK
+	// ----------------------------------------------------------------
+	fmt.Println("Starting an explicit transaction and rolling back...")
+	tx1, err := db.Begin()
+	if err != nil {
+		log.Fatalf("Failed to begin transaction tx1: %v\n", err)
+	}
+
+	// Insert a row that we'll never commit
+	_, err = tx1.Exec(`INSERT INTO student (sname, gradyear) VALUES ('Zoe', 9999)`)
+	if err != nil {
+		// If any error occurs, roll back and exit
+		_ = tx1.Rollback()
+		log.Fatalf("Failed to insert in tx1: %v\n", err)
+	}
+
+	// Now intentionally rollback
+	if err := tx1.Rollback(); err != nil {
+		log.Fatalf("Failed to roll back tx1: %v\n", err)
+	}
+
+	fmt.Println("Rolled back transaction. Row for 'Zoe' should NOT be in the table.\n")
+
+	// ----------------------------------------------------------------
+	// 3. Demonstrate a COMMIT with multiple inserts
+	// ----------------------------------------------------------------
+	fmt.Println("Starting a second explicit transaction and committing...")
+	tx2, err := db.Begin()
+	if err != nil {
+		log.Fatalf("Failed to begin transaction tx2: %v\n", err)
+	}
+
+	// Insert rows into the table inside tx2
 	insertStatements := []string{
 		`INSERT INTO student (sname, gradyear) VALUES ('Alice', 2023)`,
 		`INSERT INTO student (sname, gradyear) VALUES ('Bob', 2024)`,
@@ -47,13 +81,22 @@ func main() {
 	}
 
 	for _, stmt := range insertStatements {
-		if _, err = db.Exec(stmt); err != nil {
-			log.Fatalf("Failed to insert row: %v\n", err)
+		if _, err := tx2.Exec(stmt); err != nil {
+			// If insert fails, roll back
+			_ = tx2.Rollback()
+			log.Fatalf("Failed to insert row in tx2: %v\n", err)
 		}
 	}
-	fmt.Println("Rows inserted successfully.")
 
-	// Query the table
+	// Commit tx2 to persist the inserts
+	if err := tx2.Commit(); err != nil {
+		log.Fatalf("Failed to commit tx2: %v\n", err)
+	}
+	fmt.Println("Transaction tx2 committed successfully.\n")
+
+	// ----------------------------------------------------------------
+	// 4. Query the table to confirm the results
+	// ----------------------------------------------------------------
 	fmt.Println("Querying rows...")
 	querySQL := "SELECT sname, gradyear FROM student ORDER BY gradyear"
 	rows, err := db.Query(querySQL)
@@ -77,5 +120,6 @@ func main() {
 	if err := rows.Err(); err != nil {
 		log.Fatalf("Rows iteration error: %v\n", err)
 	}
-	fmt.Println("Query completed successfully.")
+
+	fmt.Println("\nQuery completed successfully. Notice that 'Zoe' is missing because her insert was rolled back, but 'Alice', 'Bob', and 'Charlie' are present.")
 }
