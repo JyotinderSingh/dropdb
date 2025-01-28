@@ -2,151 +2,131 @@
 
 ## Overview
 
-**DropDB** is a simple yet powerful database written in **Go**, designed as a personal learning project inspired by
-Edward Sciore's book, [Database Design and Implementation](https://link.springer.com/book/10.1007/978-3-030-33836-7).
-This project extends the original implementation described in the book, adding new features and optimizations to
-understand the intricacies of database internals. This includes disk layout optimizations, additional data types,
-more comparison operators, and support for several aggregation functions.
+DropDB is a fully-featured database written in Go, designed as an educational project inspired by Edward
+Sciore's [Database Design and Implementation](https://link.springer.com/book/10.1007/978-3-030-33836-7). The project
+extends beyond the book's implementation with enhanced features, optimizations, and additional capabilities.
 
-The goal of DropDB is to implement a fully-featured database system while exploring the intricacies of database
-internals, including storage management, query processing, transaction handling, and optimization techniques.
+The goal is to implement a fairly feature-complete database while exploring database internals, including storage
+management, query processing, transaction handling, and optimization techniques.
 
-## Features
+## Core Features
 
-DropDB is built incrementally, with the following features implemented or planned:
+### Implemented
 
-- [x] Disk and File Management
-    - Efficient storage and retrieval mechanisms with optimizations for performance.
-- [x] Memory Management
-    - Intelligent use of memory to handle data and metadata efficiently.
-- [x] Transaction Management
-    - Basic transaction handling with support for atomicity and durability.
-- [x] Record Management
-    - Management of records with efficient access and updates.
-- [x] Metadata Management
-    - Systems to manage schema, table definitions, and data organization.
-- [x] Query Processing
-    - Execution of SQL-like queries with optimized operators.
-- [x] Query Parsing
-    - Translation of user queries into executable plans.
-- [x] Planning
-    - Logical and physical plan generation for efficient execution.
-- [x] SQL Interface
-    - Standardized interfaces to interact with the database using `database/sql` package.
-- [x] Indexing
-    - Support for indexes to improve query performance.
-- [x] Materialization and Sorting
-    - Temporary data storage and ordering for efficient query execution.
-- [ ] Effective Buffer Utilization
-    - Smart buffer management to optimize disk I/O.
-- [ ] Query Optimization
-    - Cost-based optimization for selecting the most efficient execution plans.
+- **Disk and File Management**
+    - Efficient storage and retrieval with optimized disk layout
+    - Byte alignment optimization for improved performance
 
-## Additional Features
+- **Memory Management**
+    - Intelligent memory allocation for data and metadata
+    - Statistics tracking for query planning optimization
 
-- **Support for Multiple Data Types**  
-  DropDB supports a variety of data types, including:
-    - `int`, `short`, `long`, `string`, `bool`, and `date`.
-- **On-Disk Layout Optimizations**  
-  Optimized disk storage to ensure byte alignment and minimize padding, improving overall performance.
-- **Statistics**
-  Maintains statistics about the database for query planning, such as read costs, distinct records, and more.
-- **Flexible Query Expression Support**  
-  Supports a wide range of query expressions among different data types, including:
-    - `=`, `!=`, `>`, `<`, `>=`, `<=`.
-- **Several Aggregation functions**
-    - `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`.
-    - Note: The AVG function ends up casting the result to `int` due to the lack of floating-point support.
-    - Any functions requiring summing or averaging are cast to `int` to maintain consistency. This may cause issues with
-      precision for 64-bit integers on 32-bit machines. Presently I'm too lazy to fix it.
-- Supports Aggregations, Group By, and Having, and Order By clauses.
-    - Order By presently only supports ascending order, even though the query parser supports descending order. This may
-      be fixed in the future.
+- **Transaction Management**
+    - ACID compliance with atomicity and durability
+    - Robust transaction processing and recovery
 
-## Currently Supported Commands
+- **Record and Metadata Management**
+    - Efficient record access and updates
+    - Comprehensive schema and table definition management
 
-DropDB currently recognizes and executes the following statements:
+- **Query Processing**
+    - SQL parsing and execution
+    - Materialization and sorting capabilities
+    - Support for complex queries with multiple clauses
 
-### `SELECT`
+- **Indexing**
+    - B-tree index implementation
+    - Performance optimization for data retrieval
 
-* Basic projections (`SELECT field1, field2, ...`)
-* From one or more tables (using cross-products internally)
-* With `WHERE` clauses to filter results
+### In Development
 
-### `CREATE TABLE`
+- **Buffer Management**
+    - Smart buffer pool management
+    - I/O optimization strategies
 
-* Defines a new table with specified fields and data types, e.g. `CREATE TABLE users (id INT, name VARCHAR(20))`
+- **Query Optimization**
+    - Cost-based query planning
+    - Execution plan optimization
 
-### `INSERT`
+## Data Types and Operations
 
-* Inserts a single row into an existing table, e.g. `INSERT INTO users (id, name) VALUES (1, 'Alice')`
+### Supported Types
 
-### `UPDATE`
+- `int`, `short`, `long`
+- `string`
+- `bool`
+- `date`
 
-* Modifies one or more rows in an existing table, e.g. `UPDATE users SET age = 60 WHERE age >= 30`
+### Query Capabilities
 
-### `DELETE`
+- **Comparison Operators**: `=`, `!=`, `>`, `<`, `>=`, `<=`
+- **Aggregation Functions**:
+    - `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`
+    - Note: AVG and SUM results use integer casting due to current floating-point limitations
+    - Precision issues may occur with 64-bit integers on 32-bit machines
 
-* Removes rows from an existing table based on a predicate, e.g. `DELETE FROM users WHERE age < 18`
+### Query Features
 
-### `CREATE VIEW`
+- Aggregations
+- `GROUP BY` clauses
+- `HAVING` clauses
+- `ORDER BY` (currently ascending only)
 
-* Defines a named view (stored query), e.g. `CREATE VIEW active_users AS SELECT * FROM users WHERE is_active = true`
+## SQL Support
 
-### `CREATE INDEX`
+### Supported Commands
 
-* Creates an index on a given field to improve lookup performance, e.g. `CREATE INDEX idx_users_id ON users (id)`
-
-## Examples of supported queries
+#### SELECT
 
 ```sql
-select name
-from users
-where id = 1
-```
+-- Basic query with conditions
+SELECT name
+FROM users
+WHERE id = 1
 
-```sql
-select name, dept_name
-from users,
+-- Join query
+SELECT name, dept_name
+FROM users,
      departments
-where users_dept_id = dept_id
+WHERE users_dept_id = dept_id
+
+-- Aggregation with grouping
+SELECT dept, avg(salary)
+FROM employees
+GROUP BY dept
+
+-- Complex query
+SELECT category, date, sum (amount)
+FROM orders
+WHERE amount > 500
+GROUP BY category, date
+HAVING sum (amount) > 2000
+ORDER BY total asc
 ```
 
-```sql
-select dept, avg(salary)
-from employees
-group by dept
-```
+#### Data Definition
 
-```sql
-select product, sum(amount)
-from sales
-group by product
-having sum(amount) > 200
-```
+- `CREATE TABLE` - Define new tables with specified fields and types
+- `CREATE VIEW` - Create stored queries
+- `CREATE INDEX` - Build indexes for performance optimization
 
-```sql
-select name, grade
-from students
-order by grade asc
-```
+#### Data Manipulation
 
-```sql
-select category, date, sum (amount)
-from orders
-where amount > 500
-group by category, date
-having sum (amount) > 2000
-order by total desc
-```
+- `INSERT` - Add new records
+- `UPDATE` - Modify existing records
+- `DELETE` - Remove records based on conditions
 
-## Project Motivation
+## Project Goals
 
-This project serves as a hands-on journey to deeply understand the principles of database design and implementation. By
-replicating the structure outlined in Sciore's book, DropDB allows for experimentation and learning about real-world
-database challenges and solutions.
+DropDB serves as both a learning platform and a practical implementation of database concepts. While primarily developed
+for educational purposes, it aims to provide real-world database functionality and performance.
 
-## Contributions
+## Contributing
 
-While DropDB is primarily a personal learning project, contributions are welcome! If you'd like to contribute or share
-feedback, feel free to open an issue or submit a pull request.
+Contributions are welcome! Feel free to:
+
+- Open issues for bugs or feature requests
+- Submit pull requests for improvements
+- Share feedback on implementation approaches
+
+The project particularly welcomes contributions in areas like buffer management and query optimization.
