@@ -350,6 +350,10 @@ func (l *Lexer) initKeywords() {
 		"select", "from", "where", "and",
 		"insert", "into", "values", "delete", "update", "set",
 		"create", "table", "int", "varchar", "view", "as", "index", "on",
+		// Add new keywords
+		"group", "by", "having", "order", "asc", "desc",
+		// Add aggregate function keywords
+		"max", "min", "count", "avg", "sum",
 	}
 	l.keywords = make(map[string]struct{}, len(kwList))
 	for _, kw := range kwList {

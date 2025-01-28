@@ -1,11 +1,23 @@
 package parse
 
-import "github.com/JyotinderSingh/dropdb/query"
+import (
+	"github.com/JyotinderSingh/dropdb/query"
+	"github.com/JyotinderSingh/dropdb/query/functions"
+)
+
+type OrderByItem struct {
+	field      string
+	descending bool
+}
 
 type QueryData struct {
-	fields    []string
-	tables    []string
-	predicate *query.Predicate
+	fields     []string
+	tables     []string
+	predicate  *query.Predicate
+	groupBy    []string                        // Fields to group by
+	having     *query.Predicate                // Having clause predicate
+	orderBy    []OrderByItem                   // Order by clause items
+	aggregates []functions.AggregationFunction // Aggregate functions in use
 }
 
 func NewQueryData(fields, tables []string, predicate *query.Predicate) *QueryData {

@@ -182,3 +182,130 @@ func TestParserInvalidSyntax(t *testing.T) {
 
 	assert.Contains(t, err.Error(), "syntax")
 }
+
+func TestParserGroupBy(t *testing.T) {
+	sql := "SELECT department, MAX(salary), COUNT(fieldName) FROM employees GROUP BY department"
+	p := NewParser(sql)
+
+	qd, err := p.Query()
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"department"}, qd.Fields())
+	assert.Equal(t, []string{"department"}, qd.groupBy)
+
+	// Verify aggregates
+	require.Len(t, qd.aggregates, 2)
+	assert.Equal(t, "maxOfsalary", qd.aggregates[0].FieldName())
+	assert.Equal(t, "countOffieldname", qd.aggregates[1].FieldName())
+}
+
+func TestParserHaving(t *testing.T) {
+	sql := `
+        SELECT department, AVG(salary)
+        FROM employees 
+        GROUP BY department 
+        HAVING AVG(salary) > 50000
+    `
+	p := NewParser(sql)
+
+	qd, err := p.Query()
+	require.NoError(t, err)
+
+	assert.Equal(t, []string{"department"}, qd.Fields())
+	assert.Equal(t, []string{"department"}, qd.groupBy)
+
+	havingStr := qd.having.String()
+	assert.Contains(t, havingStr, "avgOfsalary > 50000")
+}
+
+func TestParserOrderBy(t *testing.T) {
+	sql := `
+        SELECT name, age 
+        FROM users 
+        ORDER BY age DESC, name ASC
+    `
+	p := NewParser(sql)
+
+	qd, err := p.Query()
+	require.NoError(t, err)
+
+	require.Len(t, qd.orderBy, 2)
+	assert.Equal(t, "age", qd.orderBy[0].field)
+	assert.True(t, qd.orderBy[0].descending)
+	assert.Equal(t, "name", qd.orderBy[1].field)
+	assert.False(t, qd.orderBy[1].descending)
+}
+
+func TestParserComplexQuery(t *testing.T) {
+	sql := `
+        SELECT 
+            department,
+            COUNT(fieldName),
+            MAX(salary),
+            MIN(hire_date)
+        FROM employees
+        WHERE status = 'Active'
+        GROUP BY department
+        HAVING COUNT(fieldName) >= 5
+        ORDER BY MAX(salary) DESC
+    `
+	p := NewParser(sql)
+
+	qd, err := p.Query()
+	require.NoError(t, err)
+
+	// Check basic fields
+	assert.Equal(t, []string{"department"}, qd.Fields())
+	assert.Equal(t, []string{"employees"}, qd.Tables())
+
+	// Check WHERE predicate
+	predStr := qd.Pred().String()
+	assert.Contains(t, predStr, "status = Active")
+
+	// Check GROUP BY
+	assert.Equal(t, []string{"department"}, qd.groupBy)
+
+	// Check HAVING
+	havingStr := qd.having.String()
+	assert.Contains(t, havingStr, "countOffieldname >= 5")
+
+	// Check ORDER BY
+	require.Len(t, qd.orderBy, 1)
+	assert.Equal(t, "maxOfsalary", qd.orderBy[0].field)
+	assert.True(t, qd.orderBy[0].descending)
+
+	// Check aggregates
+	require.Len(t, qd.aggregates, 3)
+	assert.Equal(t, "countOffieldname", qd.aggregates[0].FieldName())
+	assert.Equal(t, "maxOfsalary", qd.aggregates[1].FieldName())
+	assert.Equal(t, "minOfhire_date", qd.aggregates[2].FieldName())
+}
+
+func TestParserInvalidGroupBy(t *testing.T) {
+	invalidQueries := []string{
+		"SELECT department FROM employees GROUP BY",              // Missing group by field
+		"SELECT MAX(salary) FROM employees GROUP BY ,department", // Invalid syntax
+		"SELECT * FROM employees GROUP BY department HAVING",     // Missing having predicate
+	}
+
+	for _, sql := range invalidQueries {
+		p := NewParser(sql)
+		_, err := p.Query()
+		assert.Error(t, err, "Expected error for query: %s", sql)
+	}
+}
+
+func TestParserAggregatesWithoutGroupBy(t *testing.T) {
+	sql := "SELECT COUNT(fieldName), MAX(salary) FROM employees"
+	p := NewParser(sql)
+
+	qd, err := p.Query()
+	require.NoError(t, err)
+
+	assert.Empty(t, qd.Fields())
+	assert.Empty(t, qd.groupBy)
+
+	require.Len(t, qd.aggregates, 2)
+	assert.Equal(t, "countOffieldname", qd.aggregates[0].FieldName())
+	assert.Equal(t, "maxOfsalary", qd.aggregates[1].FieldName())
+}

@@ -1,9 +1,12 @@
 package parse
 
 import (
+	"fmt"
 	"github.com/JyotinderSingh/dropdb/query"
+	"github.com/JyotinderSingh/dropdb/query/functions"
 	"github.com/JyotinderSingh/dropdb/record"
 	"github.com/JyotinderSingh/dropdb/types"
+	"strings"
 )
 
 type Parser struct {
@@ -59,7 +62,18 @@ func (p *Parser) constant() (any, error) {
 }
 
 func (p *Parser) expression() (*query.Expression, error) {
-	// If next token is an identifier, treat as field; else treat as constant
+	// Check for aggregate function first
+	if p.lex.MatchKeyword("max") || p.lex.MatchKeyword("min") ||
+		p.lex.MatchKeyword("count") || p.lex.MatchKeyword("avg") ||
+		p.lex.MatchKeyword("sum") {
+		agg, err := p.parseAggregate()
+		if err != nil {
+			return nil, err
+		}
+		return query.NewFieldExpression(agg.FieldName()), nil
+	}
+
+	// If next token is an identifier, treat as field
 	if p.lex.MatchId() {
 		f, err := p.field()
 		if err != nil {
@@ -67,6 +81,8 @@ func (p *Parser) expression() (*query.Expression, error) {
 		}
 		return query.NewFieldExpression(f), nil
 	}
+
+	// Otherwise treat as constant
 	c, err := p.constant()
 	if err != nil {
 		return &query.Expression{}, err
@@ -143,10 +159,13 @@ func (p *Parser) Query() (*QueryData, error) {
 	if err := p.lex.EatKeyword("select"); err != nil {
 		return nil, err
 	}
-	fields, err := p.selectList()
+
+	// Parse fields and aggregates
+	fields, aggregates, err := p.selectList()
 	if err != nil {
 		return nil, err
 	}
+
 	// "from"
 	if err := p.lex.EatKeyword("from"); err != nil {
 		return nil, err
@@ -155,8 +174,11 @@ func (p *Parser) Query() (*QueryData, error) {
 	if err != nil {
 		return nil, err
 	}
-	// optional "where"
+
+	// Initialize predicate
 	pred := query.NewPredicate()
+
+	// Optional "where"
 	if p.lex.MatchKeyword("where") {
 		_ = p.lex.EatKeyword("where")
 		pr, err := p.predicate()
@@ -165,24 +187,181 @@ func (p *Parser) Query() (*QueryData, error) {
 		}
 		pred = pr
 	}
-	return NewQueryData(fields, tables, pred), nil
-}
 
-func (p *Parser) selectList() ([]string, error) {
-	f, err := p.field()
-	if err != nil {
-		return nil, err
-	}
-	fields := []string{f}
-	if p.lex.MatchDelim(',') {
-		_ = p.lex.EatDelim(',')
-		rest, err := p.selectList()
+	// Optional "group by"
+	var groupBy []string
+	if p.lex.MatchKeyword("group") {
+		groupBy, err = p.parseGroupBy()
 		if err != nil {
 			return nil, err
 		}
-		fields = append(fields, rest...)
 	}
-	return fields, nil
+
+	// Optional "having"
+	var having *query.Predicate
+	if p.lex.MatchKeyword("having") {
+		_ = p.lex.EatKeyword("having")
+		having, err = p.predicate()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	// Optional "order by"
+	var orderBy []OrderByItem
+	if p.lex.MatchKeyword("order") {
+		orderBy, err = p.parseOrderBy()
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return &QueryData{
+		fields:     fields,
+		tables:     tables,
+		predicate:  pred,
+		groupBy:    groupBy,
+		having:     having,
+		orderBy:    orderBy,
+		aggregates: aggregates,
+	}, nil
+}
+
+func (p *Parser) selectList() ([]string, []functions.AggregationFunction, error) {
+	var fields []string
+	var aggregates []functions.AggregationFunction
+
+	for {
+		// Check for aggregate function
+		if p.lex.MatchKeyword("max") || p.lex.MatchKeyword("min") ||
+			p.lex.MatchKeyword("count") || p.lex.MatchKeyword("avg") ||
+			p.lex.MatchKeyword("sum") {
+			agg, err := p.parseAggregate()
+			if err != nil {
+				return nil, nil, err
+			}
+			aggregates = append(aggregates, agg)
+			// I don't think this is needed, might uncomment later :P
+			//fields = append(fields, agg.FieldName())
+		} else {
+			// Regular field
+			field, err := p.field()
+			if err != nil {
+				return nil, nil, err
+			}
+			fields = append(fields, field)
+		}
+
+		// Continue if there's a comma
+		if !p.lex.MatchDelim(',') {
+			break
+		}
+		_ = p.lex.EatDelim(',')
+	}
+
+	return fields, aggregates, nil
+}
+
+// Parse aggregate function
+func (p *Parser) parseAggregate() (functions.AggregationFunction, error) {
+	// Get function name
+	funcName := strings.ToLower(p.lex.currentToken.StringVal)
+	if err := p.lex.nextToken(); err != nil {
+		return nil, err
+	}
+
+	// Expect opening parenthesis
+	if err := p.lex.EatDelim('('); err != nil {
+		return nil, err
+	}
+
+	// Get field name
+	field, err := p.field()
+	if err != nil {
+		return nil, err
+	}
+
+	// Expect closing parenthesis
+	if err := p.lex.EatDelim(')'); err != nil {
+		return nil, err
+	}
+
+	switch funcName {
+	case "max":
+		return functions.NewMaxFunction(field), nil
+	case "min":
+		return functions.NewMinFunction(field), nil
+	case "count":
+		return functions.NewCountFunction(field), nil
+	case "avg":
+		return functions.NewAvgFunction(field), nil
+	case "sum":
+		return functions.NewSumFunction(field), nil
+	default:
+		return nil, fmt.Errorf("unknown aggregate function: %s", funcName)
+	}
+}
+
+// Parse GROUP BY clause
+func (p *Parser) parseGroupBy() ([]string, error) {
+	if err := p.lex.EatKeyword("group"); err != nil {
+		return nil, err
+	}
+	if err := p.lex.EatKeyword("by"); err != nil {
+		return nil, err
+	}
+
+	return p.fieldList()
+}
+
+// Parse ORDER BY clause
+func (p *Parser) parseOrderBy() ([]OrderByItem, error) {
+	if err := p.lex.EatKeyword("order"); err != nil {
+		return nil, err
+	}
+	if err := p.lex.EatKeyword("by"); err != nil {
+		return nil, err
+	}
+
+	var items []OrderByItem
+	for {
+		var field string
+		var err error
+
+		// Check for aggregate function
+		if p.lex.MatchKeyword("max") || p.lex.MatchKeyword("min") ||
+			p.lex.MatchKeyword("count") || p.lex.MatchKeyword("avg") ||
+			p.lex.MatchKeyword("sum") {
+			agg, err := p.parseAggregate()
+			if err != nil {
+				return nil, err
+			}
+			field = agg.FieldName()
+		} else {
+			field, err = p.field()
+			if err != nil {
+				return nil, err
+			}
+		}
+
+		// Check for optional ASC/DESC
+		descending := false
+		if p.lex.MatchKeyword("desc") {
+			_ = p.lex.EatKeyword("desc")
+			descending = true
+		} else if p.lex.MatchKeyword("asc") {
+			_ = p.lex.EatKeyword("asc")
+		}
+
+		items = append(items, OrderByItem{field: field, descending: descending})
+
+		if !p.lex.MatchDelim(',') {
+			break
+		}
+		_ = p.lex.EatDelim(',')
+	}
+
+	return items, nil
 }
 
 func (p *Parser) tableList() ([]string, error) {
