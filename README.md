@@ -56,8 +56,12 @@ DropDB is built incrementally, with the following features implemented or planne
     - `=`, `!=`, `>`, `<`, `>=`, `<=`.
 - **Several Aggregation functions**
     - `COUNT`, `SUM`, `AVG`, `MIN`, `MAX`.
-    - However, `GROUP BY`, `HAVING`, and `ORDER BY` are not yet supported by the parser. I'll probably add that at some
-      point when I switch this parser to a more maintainable one, preferably built using ANTLR.
+    - Note: The AVG function ends up casting the result to `int` due to the lack of floating-point support.
+    - Any functions requiring summing or averaging are cast to `int` to maintain consistency. This may cause issues with
+      precision for 64-bit integers on 32-bit machines. Presently I'm too lazy to fix it.
+- Supports Aggregations, Group By, and Having, and Order By clauses.
+    - Order By presently only supports ascending order, even though the query parser supports descending order. This may
+      be fixed in the future.
 
 ## Currently Supported Commands
 
@@ -92,6 +96,49 @@ DropDB currently recognizes and executes the following statements:
 ### `CREATE INDEX`
 
 * Creates an index on a given field to improve lookup performance, e.g. `CREATE INDEX idx_users_id ON users (id)`
+
+## Examples of supported queries
+
+```sql
+select name
+from users
+where id = 1
+```
+
+```sql
+select name, dept_name
+from users,
+     departments
+where users_dept_id = dept_id
+```
+
+```sql
+select dept, avg(salary)
+from employees
+group by dept
+```
+
+```sql
+select product, sum(amount)
+from sales
+group by product
+having sum(amount) > 200
+```
+
+```sql
+select name, grade
+from students
+order by grade asc
+```
+
+```sql
+select category, date, sum (amount)
+from orders
+where amount > 500
+group by category, date
+having sum (amount) > 2000
+order by total desc
+```
 
 ## Project Motivation
 

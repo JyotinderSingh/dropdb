@@ -241,9 +241,9 @@ func TestBasicQueryPlanner_GroupBy(t *testing.T) {
 
 	// Test GROUP BY with aggregate function
 	sql := `
-		select dept, avg(salary) 
-		from employees 
-		group by dept
+			select dept, avg(salary) 
+			from employees 
+			group by dept
 	`
 	parser := parse.NewParser(sql)
 	queryData, err := parser.Query()
