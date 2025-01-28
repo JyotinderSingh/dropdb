@@ -214,6 +214,9 @@ func TestParserHaving(t *testing.T) {
 	assert.Equal(t, []string{"department"}, qd.Fields())
 	assert.Equal(t, []string{"department"}, qd.groupBy)
 
+	assert.Equal(t, 1, len(qd.aggregates))
+	assert.Equal(t, "avgOfsalary", qd.aggregates[0].FieldName())
+
 	havingStr := qd.having.String()
 	assert.Contains(t, havingStr, "avgOfsalary > 50000")
 }
