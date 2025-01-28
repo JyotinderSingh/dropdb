@@ -3,6 +3,7 @@ package driver
 import (
 	"database/sql/driver"
 	"fmt"
+	"github.com/JyotinderSingh/dropdb/tx"
 	"strings"
 )
 
@@ -25,15 +26,14 @@ func (s *DropDBStmt) NumInput() int {
 // Exec executes a non-SELECT statement (INSERT, UPDATE, DELETE, CREATE, etc).
 // If the statement is actually a SELECT, we throw an error or ignore.
 func (s *DropDBStmt) Exec(args []driver.Value) (driver.Result, error) {
-	// Create a new DropDB transaction for this statement (auto-commit style).
-	t := s.conn.db.NewTx()
-	committed := false
-	defer func() {
-		if !committed {
-			// If we return early with an error or panic, roll back so we don't leave it open.
-			_ = t.Rollback()
-		}
-	}()
+	var t *tx.Transaction
+	if s.conn.activeTx == nil {
+		// create transaction for auto-commit
+		t = s.conn.db.NewTx()
+	} else {
+		// use the existing transaction
+		t = s.conn.activeTx
+	}
 
 	planner := s.conn.db.Planner()
 
@@ -50,16 +50,21 @@ func (s *DropDBStmt) Exec(args []driver.Value) (driver.Result, error) {
 	// For all other statements (CREATE, INSERT, UPDATE, DELETE, etc.),
 	// use planner.ExecuteUpdate
 	rowsAffected, err := planner.ExecuteUpdate(s.query, t)
+
 	if err != nil {
+		// if it was an auto-commit transaction, rollback
+		if s.conn.activeTx == nil {
+			_ = t.Rollback()
+		}
 		return nil, err
 	}
 
-	// Commit on success
-	err = t.Commit()
-	if err != nil {
-		return nil, err
+	if s.conn.activeTx == nil {
+		// auto-commit
+		if err := t.Commit(); err != nil {
+			return nil, err
+		}
 	}
-	committed = true
 
 	// Return a driver.Result containing rows-affected count
 	return &DropDBResult{rowsAffected: int64(rowsAffected)}, nil
@@ -67,9 +72,16 @@ func (s *DropDBStmt) Exec(args []driver.Value) (driver.Result, error) {
 
 // Query executes a SELECT statement and returns the resulting rows.
 func (s *DropDBStmt) Query(args []driver.Value) (driver.Rows, error) {
-	t := s.conn.db.NewTx()
+	// Decide whether we're in an explicit transaction or need to auto-commit
+	var t *tx.Transaction
+	if s.conn.activeTx == nil {
+		// No active transaction => create a new one for auto-commit
+		t = s.conn.db.NewTx()
+	} else {
+		// We already have an open transaction
+		t = s.conn.activeTx
+	}
 
-	planner := s.conn.db.Planner()
 	// We'll detect SELECT queries by prefix:
 	lower := strings.ToLower(strings.TrimSpace(s.query))
 	if !strings.HasPrefix(lower, "select") {
@@ -77,6 +89,8 @@ func (s *DropDBStmt) Query(args []driver.Value) (driver.Rows, error) {
 		// For everything else (CREATE, INSERT, etc.) we do Exec.
 		return nil, fmt.Errorf("Query called with non-SELECT statement: %s", s.query)
 	}
+
+	planner := s.conn.db.Planner()
 
 	// Use the Planner to build a query plan
 	plan, err := planner.CreateQueryPlan(s.query, t)
@@ -88,7 +102,9 @@ func (s *DropDBStmt) Query(args []driver.Value) (driver.Rows, error) {
 
 	sc, err := plan.Open()
 	if err != nil {
-		_ = t.Rollback()
+		if s.conn.activeTx == nil {
+			_ = t.Rollback()
+		}
 		return nil, err
 	}
 

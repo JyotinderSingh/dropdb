@@ -2,12 +2,17 @@ package driver
 
 import (
 	"database/sql/driver"
+	"errors"
 	"github.com/JyotinderSingh/dropdb/server"
+	"github.com/JyotinderSingh/dropdb/tx"
 )
 
 // DropDBConn implements driver.Conn.
 type DropDBConn struct {
 	db *server.DropDB
+
+	// activeTx is non-nil if we are in an explicit transaction
+	activeTx *tx.Transaction
 }
 
 // Prepare returns a prepared statement, but we'll simply store the SQL string.
@@ -26,11 +31,16 @@ func (c *DropDBConn) Close() error {
 	return nil
 }
 
-// Begin starts a transaction. If you want to support explicit
-// transaction semantics (e.g. db.Begin(), tx.Commit(), tx.Rollback()),
-// you can do so here. We'll do a simple pass-through model to a new Tx.
+// Begin starts a transaction
 func (c *DropDBConn) Begin() (driver.Tx, error) {
-	// Start a brand new DropDB transaction
-	t := c.db.NewTx()
-	return &DropDBTx{tx: t}, nil
+	if c.activeTx != nil {
+		// either error or nested transactions if supported
+		return nil, errors.New("already in a transaction")
+	}
+	newTx := c.db.NewTx()
+	c.activeTx = newTx
+	return &DropDBTx{
+		conn: c,
+		tx:   newTx,
+	}, nil
 }

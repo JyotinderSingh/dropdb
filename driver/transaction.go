@@ -4,16 +4,20 @@ import "github.com/JyotinderSingh/dropdb/tx"
 
 // DropDBTx implements driver.Tx so that database/sql can manage
 // a transaction with Commit() and Rollback().
+// It just holds a reference to the connection so we can clear activeTx on commit/rollback
 type DropDBTx struct {
-	tx *tx.Transaction
+	conn *DropDBConn
+	tx   *tx.Transaction
 }
 
-// Commit commits the current DropDB transaction
 func (t *DropDBTx) Commit() error {
-	return t.tx.Commit()
+	err := t.tx.Commit()
+	t.conn.activeTx = nil
+	return err
 }
 
-// Rollback rolls back the current DropDB transaction
 func (t *DropDBTx) Rollback() error {
-	return t.tx.Rollback()
+	err := t.tx.Rollback()
+	t.conn.activeTx = nil
+	return err
 }
