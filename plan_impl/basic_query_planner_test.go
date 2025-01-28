@@ -218,3 +218,270 @@ func insertTestData(t *testing.T, txn *tx.Transaction, tableName string, mdm *me
 		}
 	}
 }
+func TestBasicQueryPlanner_GroupBy(t *testing.T) {
+	fm, lm, bm, lt := setupTestManagers(t, 800, 8)
+	txn := tx.NewTransaction(fm, lm, bm, lt)
+
+	mdm := createTableMetadataWithSchema(t, txn, "employees", map[string]interface{}{
+		"id":     0,
+		"dept":   "string",
+		"salary": 0,
+	})
+
+	insertTestData(t, txn, "employees", mdm, []map[string]interface{}{
+		{"id": 1, "dept": "Engineering", "salary": 80000},
+		{"id": 2, "dept": "Engineering", "salary": 90000},
+		{"id": 3, "dept": "Sales", "salary": 60000},
+		{"id": 4, "dept": "Sales", "salary": 65000},
+	})
+
+	require.NoError(t, txn.Commit())
+
+	qp := NewBasicQueryPlanner(mdm)
+
+	// Test GROUP BY with aggregate function
+	sql := `
+		select dept, avg(salary) 
+		from employees 
+		group by dept
+	`
+	parser := parse.NewParser(sql)
+	queryData, err := parser.Query()
+	require.NoError(t, err)
+
+	queryTx := tx.NewTransaction(fm, lm, bm, lt)
+	plan, err := qp.CreatePlan(queryData, queryTx)
+	require.NoError(t, err)
+
+	s, err := plan.Open()
+	require.NoError(t, err)
+	defer s.Close()
+
+	results := make(map[string]int)
+	require.NoError(t, s.BeforeFirst())
+	for {
+		hasNext, err := s.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+
+		dept, err := s.GetString("dept")
+		require.NoError(t, err)
+		avgSalary, err := s.GetInt("avgOfsalary")
+		require.NoError(t, err)
+
+		results[dept] = avgSalary
+	}
+
+	assert.Equal(t, 85000, results["Engineering"])
+	assert.Equal(t, 62500, results["Sales"])
+	require.NoError(t, queryTx.Commit())
+}
+
+func TestBasicQueryPlanner_GroupByWithHaving(t *testing.T) {
+	fm, lm, bm, lt := setupTestManagers(t, 800, 8)
+	txn := tx.NewTransaction(fm, lm, bm, lt)
+
+	mdm := createTableMetadataWithSchema(t, txn, "sales", map[string]interface{}{
+		"product": "string",
+		"region":  "string",
+		"amount":  0,
+	})
+
+	insertTestData(t, txn, "sales", mdm, []map[string]interface{}{
+		{"product": "Widget", "region": "North", "amount": 100},
+		{"product": "Widget", "region": "North", "amount": 150},
+		{"product": "Gadget", "region": "South", "amount": 50},
+		{"product": "Gadget", "region": "South", "amount": 75},
+	})
+
+	require.NoError(t, txn.Commit())
+
+	qp := NewBasicQueryPlanner(mdm)
+
+	sql := `
+		select product, sum(amount) 
+		from sales 
+		group by product 
+		having sum(amount) > 200
+	`
+	parser := parse.NewParser(sql)
+	queryData, err := parser.Query()
+	require.NoError(t, err)
+
+	queryTx := tx.NewTransaction(fm, lm, bm, lt)
+	plan, err := qp.CreatePlan(queryData, queryTx)
+	require.NoError(t, err)
+
+	s, err := plan.Open()
+	require.NoError(t, err)
+	defer s.Close()
+
+	count := 0
+	require.NoError(t, s.BeforeFirst())
+	for {
+		hasNext, err := s.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+		count++
+
+		product, err := s.GetString("product")
+		require.NoError(t, err)
+		total, err := s.GetInt("sumOfamount")
+		require.NoError(t, err)
+
+		assert.Equal(t, "Widget", product)
+		assert.Equal(t, 250, total)
+	}
+	assert.Equal(t, 1, count)
+	require.NoError(t, queryTx.Commit())
+}
+
+func TestBasicQueryPlanner_OrderBy(t *testing.T) {
+	fm, lm, bm, lt := setupTestManagers(t, 800, 8)
+	txn := tx.NewTransaction(fm, lm, bm, lt)
+
+	mdm := createTableMetadataWithSchema(t, txn, "students", map[string]interface{}{
+		"id":    0,
+		"name":  "string",
+		"grade": 0,
+	})
+
+	insertTestData(t, txn, "students", mdm, []map[string]interface{}{
+		{"id": 1, "name": "Charlie", "grade": 85},
+		{"id": 2, "name": "Alice", "grade": 92},
+		{"id": 3, "name": "Bob", "grade": 78},
+	})
+
+	require.NoError(t, txn.Commit())
+
+	qp := NewBasicQueryPlanner(mdm)
+
+	sql := `
+		select name, grade 
+		from students 
+		order by grade asc
+	`
+	parser := parse.NewParser(sql)
+	queryData, err := parser.Query()
+	require.NoError(t, err)
+
+	queryTx := tx.NewTransaction(fm, lm, bm, lt)
+	plan, err := qp.CreatePlan(queryData, queryTx)
+	require.NoError(t, err)
+
+	s, err := plan.Open()
+	require.NoError(t, err)
+	defer s.Close()
+
+	expected := []struct {
+		name  string
+		grade int
+	}{
+		{"Bob", 78},
+		{"Charlie", 85},
+		{"Alice", 92},
+	}
+
+	require.NoError(t, s.BeforeFirst())
+	idx := 0
+	for {
+		hasNext, err := s.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+
+		name, err := s.GetString("name")
+		require.NoError(t, err)
+		grade, err := s.GetInt("grade")
+		require.NoError(t, err)
+
+		assert.Equal(t, expected[idx].name, name)
+		assert.Equal(t, expected[idx].grade, grade)
+		idx++
+	}
+	assert.Equal(t, len(expected), idx)
+	require.NoError(t, queryTx.Commit())
+}
+
+func TestBasicQueryPlanner_ComplexQuery(t *testing.T) {
+	fm, lm, bm, lt := setupTestManagers(t, 800, 8)
+	txn := tx.NewTransaction(fm, lm, bm, lt)
+
+	mdm := createTableMetadataWithSchema(t, txn, "orders", map[string]interface{}{
+		"id":       0,
+		"product":  "string",
+		"category": "string",
+		"amount":   0,
+		"date":     "string",
+	})
+
+	insertTestData(t, txn, "orders", mdm, []map[string]interface{}{
+		{"id": 1, "product": "Laptop", "category": "Electronics", "amount": 2000, "date": "2024-01"},
+		{"id": 2, "product": "Phone", "category": "Electronics", "amount": 2400, "date": "2024-01"},
+		{"id": 3, "product": "Desk", "category": "Furniture", "amount": 300, "date": "2024-01"},
+		{"id": 4, "product": "Laptop", "category": "Electronics", "amount": 1200, "date": "2024-02"},
+		{"id": 5, "product": "Chair", "category": "Furniture", "amount": 400, "date": "2024-02"},
+	})
+
+	require.NoError(t, txn.Commit())
+
+	qp := NewBasicQueryPlanner(mdm)
+
+	sql := `
+		select category, date, sum(amount)
+		from orders
+		where amount > 500
+		group by category, date
+		having sum(amount) > 2000
+		order by total desc
+	`
+	parser := parse.NewParser(sql)
+	queryData, err := parser.Query()
+	require.NoError(t, err)
+
+	queryTx := tx.NewTransaction(fm, lm, bm, lt)
+	plan, err := qp.CreatePlan(queryData, queryTx)
+	require.NoError(t, err)
+
+	s, err := plan.Open()
+	require.NoError(t, err)
+	defer s.Close()
+
+	expected := []struct {
+		category string
+		date     string
+		total    int
+	}{
+		{"Electronics", "2024-01", 4400},
+	}
+
+	require.NoError(t, s.BeforeFirst())
+	count := 0
+	for {
+		hasNext, err := s.Next()
+		require.NoError(t, err)
+		if !hasNext {
+			break
+		}
+
+		category, err := s.GetString("category")
+		require.NoError(t, err)
+		date, err := s.GetString("date")
+		require.NoError(t, err)
+		total, err := s.GetInt("sumOfamount")
+		require.NoError(t, err)
+
+		assert.Equal(t, expected[count].category, category)
+		assert.Equal(t, expected[count].date, date)
+		assert.Equal(t, expected[count].total, total)
+		count++
+	}
+
+	assert.Equal(t, 1, count)
+	require.NoError(t, queryTx.Commit())
+}

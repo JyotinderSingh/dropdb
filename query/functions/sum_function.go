@@ -12,7 +12,7 @@ const sumFunctionPrefix = "sumOf"
 
 type SumFunction struct {
 	fieldName string
-	sum       int64 // Using int64 to accumulate sums safely
+	sum       int // Using int to make it simpler to handle types across the db. This might cause issues with 64-bit integers on 32-bit architectures.
 }
 
 // NewSumFunction creates a new sum aggregation function for the specified field.
@@ -28,7 +28,7 @@ func (f *SumFunction) ProcessFirst(s scan.Scan) error {
 	if err != nil {
 		return err
 	}
-	intVal, err := toInt64(val)
+	intVal, err := toInt(val)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (f *SumFunction) ProcessNext(s scan.Scan) error {
 	if err != nil {
 		return err
 	}
-	intVal, err := toInt64(val)
+	intVal, err := toInt(val)
 	if err != nil {
 		return err
 	}
@@ -61,14 +61,16 @@ func (f *SumFunction) Value() any {
 }
 
 // Helper to handle int, int16, int64, or possibly other numeric types.
-func toInt64(v any) (int64, error) {
+// Using int to make it simpler to handle types across the db.
+// This might cause issues with 64-bit integers on 32-bit architectures.
+func toInt(v any) (int, error) {
 	switch num := v.(type) {
 	case int:
-		return int64(num), nil
-	case int16:
-		return int64(num), nil
-	case int64:
 		return num, nil
+	case int16:
+		return int(num), nil
+	case int64:
+		return int(num), nil
 	default:
 		return 0, fmt.Errorf("cannot convert %T to int64 for sum", v)
 	}

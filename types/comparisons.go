@@ -12,20 +12,18 @@ func CompareSupportedTypes(lhs, rhs any, op Operator) bool {
 		return false // Null comparisons always return false in SQL semantics
 	}
 
-	// Type-specific comparisons
+	// First try to unify integer types:
+	// Using int to make it simpler to handle types across the db.
+	// This might cause issues with 64-bit integers on 32-bit architectures.
+	if lhsInt, lhsIsInt := toInt(lhs); lhsIsInt {
+		if rhsInt, rhsIsInt := toInt(rhs); rhsIsInt {
+			// Both lhs and rhs are integers, so compare them as int64
+			return compareInts(lhsInt, rhsInt, op)
+		}
+	}
+
+	// If not both integers, switch on types for the other supported comparisons:
 	switch lhs := lhs.(type) {
-	case int:
-		if rhs, ok := rhs.(int); ok {
-			return compareInts(lhs, rhs, op)
-		}
-	case int64:
-		if rhs, ok := rhs.(int64); ok {
-			return compareInt64s(lhs, rhs, op)
-		}
-	case int16:
-		if rhs, ok := rhs.(int16); ok {
-			return compareInt16s(lhs, rhs, op)
-		}
 	case string:
 		if rhs, ok := rhs.(string); ok {
 			return compareStrings(lhs, rhs, op)
@@ -38,13 +36,30 @@ func CompareSupportedTypes(lhs, rhs any, op Operator) bool {
 		if rhs, ok := rhs.(time.Time); ok {
 			return compareTimes(lhs, rhs, op)
 		}
+	// You can still directly handle type == type comparisons if needed
+	// (e.g., if you had float64 or others).
 	default:
 		// Log unsupported type for debugging
-		fmt.Printf("Unsupported type for comparison: lhs=%T, rhs=%T\n", lhs, rhs)
+		fmt.Printf("Unsupported or mismatched types for comparison: lhs=%T, rhs=%T\n", lhs, rhs)
 	}
 
 	// Return false for unsupported or mismatched types
 	return false
+}
+
+// toInt attempts to convert an interface to int.
+// It returns (convertedValue, true) if successful; (0, false) otherwise.
+func toInt(i any) (int, bool) {
+	switch v := i.(type) {
+	case int:
+		return v, true
+	case int64:
+		return int(v), true
+	case int16:
+		return int(v), true
+	default:
+		return 0, false
+	}
 }
 
 // compareInts compares two integers.

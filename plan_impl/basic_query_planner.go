@@ -19,11 +19,13 @@ func NewBasicQueryPlanner(metadataManager *metadata.Manager) *BasicQueryPlanner 
 }
 
 // CreatePlan creates a query plan as follows:
-// It first takes the product ofo all tables and views.
-// It then selects on the predicate.
-// And finally it projects on the field list.
+// 1. Takes the product of all tables and views
+// 2. Applies predicate selection
+// 3. Applies grouping and having if specified
+// 4. Projects on the field list
+// 5. Applies ordering if specified
 func (qp *BasicQueryPlanner) CreatePlan(queryData *parse.QueryData, transaction *tx.Transaction) (plan.Plan, error) {
-	// 1. Create a plan for each mentioned table or view.
+	// 1. Create a plan for each mentioned table or view
 	plans := make([]plan.Plan, len(queryData.Tables()))
 	for idx, tableName := range queryData.Tables() {
 		viewDefinition, err := qp.metadataManager.GetViewDefinition(tableName, transaction)
@@ -31,7 +33,6 @@ func (qp *BasicQueryPlanner) CreatePlan(queryData *parse.QueryData, transaction 
 			return nil, err
 		}
 
-		// If the table is not a view, create a plan for it.
 		if viewDefinition == "" {
 			tablePlan, err := NewTablePlan(transaction, tableName, qp.metadataManager)
 			if err != nil {
@@ -59,7 +60,6 @@ func (qp *BasicQueryPlanner) CreatePlan(queryData *parse.QueryData, transaction 
 	plans = plans[1:]
 
 	for _, nextPlan := range plans {
-		// Generate two alternative plans for the product of the two plans.
 		planChoice1, err := NewProductPlan(currentPlan, nextPlan)
 		if err != nil {
 			return nil, err
@@ -70,7 +70,6 @@ func (qp *BasicQueryPlanner) CreatePlan(queryData *parse.QueryData, transaction 
 			return nil, err
 		}
 
-		// Choose the plan with the lower cost.
 		if planChoice1.BlocksAccessed() < planChoice2.BlocksAccessed() {
 			currentPlan = planChoice1
 		} else {
@@ -78,13 +77,38 @@ func (qp *BasicQueryPlanner) CreatePlan(queryData *parse.QueryData, transaction 
 		}
 	}
 
-	// 3. Add a selection plan for the predicate.
+	// 3. Add a selection plan for the predicate
 	currentPlan = NewSelectPlan(currentPlan, queryData.Pred())
 
-	// 4. Add a projection plan for the field list.
-	currentPlan, err = NewProjectPlan(currentPlan, queryData.Fields())
+	projectionFields := queryData.Fields()
+	// 4. Add grouping if specified
+	if len(queryData.GroupBy()) > 0 {
+		currentPlan = NewGroupByPlan(transaction, currentPlan, queryData.GroupBy(), queryData.Aggregates())
+
+		// Apply having clause if present
+		if queryData.Having() != nil {
+			currentPlan = NewSelectPlan(currentPlan, queryData.Having())
+		}
+
+		for _, AggFunc := range queryData.Aggregates() {
+			projectionFields = append(projectionFields, AggFunc.FieldName())
+		}
+	}
+
+	// 5. Add a projection plan for the field list
+	currentPlan, err = NewProjectPlan(currentPlan, projectionFields)
 	if err != nil {
 		return nil, err
+	}
+
+	// 6. Add ordering if specified
+	if len(queryData.OrderBy()) > 0 {
+		sortFields := make([]string, len(queryData.OrderBy()))
+		for i, item := range queryData.OrderBy() {
+			// Note: Currently the SortPlan doesn't support descending order
+			sortFields[i] = item.Field()
+		}
+		currentPlan = NewSortPlan(transaction, currentPlan, sortFields)
 	}
 
 	return currentPlan, nil

@@ -10,8 +10,8 @@ const avgFunctionPrefix = "avgOf"
 
 type AvgFunction struct {
 	fieldName string
-	sum       int64
-	count     int64
+	sum       int
+	count     int
 }
 
 // NewAvgFunction creates a new avg aggregation function for the specified field.
@@ -27,7 +27,7 @@ func (f *AvgFunction) ProcessFirst(s scan.Scan) error {
 	if err != nil {
 		return err
 	}
-	numVal, err := toInt64(val)
+	numVal, err := toInt(val)
 	if err != nil {
 		return err
 	}
@@ -42,7 +42,7 @@ func (f *AvgFunction) ProcessNext(s scan.Scan) error {
 	if err != nil {
 		return err
 	}
-	numVal, err := toInt64(val)
+	numVal, err := toInt(val)
 	if err != nil {
 		return err
 	}
@@ -57,9 +57,10 @@ func (f *AvgFunction) FieldName() string {
 }
 
 // Value returns the current average as a float64 (or int, depending on your needs).
+// TODO: Casts value to int for now since our database doesnt support floats yet..
 func (f *AvgFunction) Value() any {
 	if f.count == 0 {
-		return float64(0) // or error if no rows
+		return 0 // or error if no rows
 	}
-	return float64(f.sum) / float64(f.count)
+	return int(f.sum / f.count)
 }

@@ -10,6 +10,10 @@ type OrderByItem struct {
 	descending bool
 }
 
+func (obi *OrderByItem) Field() string {
+	return obi.field
+}
+
 type QueryData struct {
 	fields     []string
 	tables     []string
@@ -38,6 +42,22 @@ func (qd *QueryData) Tables() []string {
 
 func (qd *QueryData) Pred() *query.Predicate {
 	return qd.predicate
+}
+
+func (qd *QueryData) GroupBy() []string {
+	return qd.groupBy
+}
+
+func (qd *QueryData) Having() *query.Predicate {
+	return qd.having
+}
+
+func (qd *QueryData) OrderBy() []OrderByItem {
+	return qd.orderBy
+}
+
+func (qd *QueryData) Aggregates() []functions.AggregationFunction {
+	return qd.aggregates
 }
 
 func (qd *QueryData) String() string {
